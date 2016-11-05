@@ -5,6 +5,10 @@
 	#include <GLES2/gl2.h>
 #endif
 
+#ifdef EMSCRIPTEN
+	#include <html5.h>
+#endif
+
 #include "graphics_ctx.hpp"
 
 #include "text.hpp"
@@ -36,6 +40,31 @@ namespace renderer {
 				SDL_ClearError();
 				FAIL("SDL: "<<errorStr);
 			}
+		}
+
+		void enable_extension(const char* name) {
+#ifdef EMSCRIPTEN
+			auto ctx = emscripten_webgl_get_current_context();
+			INVARIANT(ctx!=0, "No active WebGL context.");
+
+			auto result = emscripten_webgl_enable_extension(ctx, name);
+			INVARIANT(result, "Required extension '"<<name<<"' is not supported by your browser.");
+#else
+			(void) name;
+#endif
+		}
+
+		void enable_required_extensions() {
+#ifdef EMSCRIPTEN
+			enable_extension("ANGLE_instanced_arrays");
+			enable_extension("OES_texture_float");
+			enable_extension("OES_texture_float_linear");
+			enable_extension("OES_vertex_array_object");
+			enable_extension("WEBGL_depth_texture");
+			enable_extension("WEBGL_draw_buffers");
+#else
+			(void) enable_extension;
+#endif
 		}
 
 #ifndef ANDROID
@@ -231,6 +260,8 @@ namespace renderer {
 		}
 	#endif
 #endif
+
+		enable_required_extensions();
 
 		glLineWidth(2.0f);
 		glEnable(GL_BLEND);

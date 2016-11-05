@@ -96,9 +96,8 @@ namespace editor {
 		};
 
 
-		struct nk_panel layout;
 		auto ctx = _gui.ctx();
-		if (nk_begin_titled(ctx, &layout, "settings", text("settings"), _gui.centered(400, 800),
+		if (nk_begin_titled(ctx, "settings", text("settings"), _gui.centered(400, 800),
 		             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE|
 		             NK_WINDOW_TITLE|NK_WINDOW_SCALABLE|NK_WINDOW_SCROLL_AUTO_HIDE)) {
 

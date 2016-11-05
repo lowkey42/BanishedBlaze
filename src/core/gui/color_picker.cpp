@@ -8,8 +8,7 @@ namespace gui {
 
 	namespace {
 		bool color_picker(nk_context* ctx, nk_color& c, int width, bool hasAlpha) {
-			nk_panel combo;
-			if (nk_combo_begin_color(ctx, &combo, c, width)) {
+			if (nk_combo_begin_color(ctx, c, nk_vec2(width, width))) {
 				nk_layout_row_dynamic(ctx, 120, 1);
 				c = nk_color_picker(ctx, c, hasAlpha ? NK_RGBA : NK_RGB);
 

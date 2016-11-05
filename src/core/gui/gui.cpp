@@ -296,13 +296,17 @@ namespace gui {
 			}
 		};
 
-		using Nk_vertex = struct nk_draw_vertex;
+		struct Nk_vertex {
+			glm::vec2 position;
+			glm::vec2 uv;
+			nk_byte color[4];
+		};
 
 		const Vertex_layout nk_vertex_layout {
 			Vertex_layout::Mode::triangles,
 			vertex("position",  &Nk_vertex::position),
 			vertex("uv",        &Nk_vertex::uv),
-			Vertex_layout::Element{"color", 4, Vertex_layout::Element_type::ubyte_t, true, details::calcOffset(&Nk_vertex::col), 0, 0}
+			Vertex_layout::Element{"color", 4, Vertex_layout::Element_type::ubyte_t, true, details::calcOffset(&Nk_vertex::color), 0, 0}
 		};
 
 		template<class T>
@@ -369,6 +373,16 @@ namespace gui {
 				config.curve_segment_count = 22;
 				config.arc_segment_count = 22;
 				config.null = null_tex;
+
+				constexpr struct nk_draw_vertex_layout_element vertex_layout[] = {
+					{NK_VERTEX_POSITION, NK_FORMAT_FLOAT, offsetof(Nk_vertex, position)},
+					{NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, offsetof(Nk_vertex, uv)},
+					{NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, offsetof(Nk_vertex, color)},
+					{NK_VERTEX_LAYOUT_END}
+				};
+				config.vertex_layout = vertex_layout;
+				config.vertex_size = sizeof(struct Nk_vertex);
+				config.vertex_alignment = NK_ALIGNOF(struct Nk_vertex);
 
 				nk_buffer_clear(&vbo.buffer);
 				nk_buffer_clear(&ibo.buffer);

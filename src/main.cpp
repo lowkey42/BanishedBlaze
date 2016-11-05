@@ -79,7 +79,7 @@ int main(int argc, char** argv, char** env) {
 }
 
 namespace {
-	constexpr auto app_name = "IntoTheLight";
+	constexpr auto app_name = "BanishedBlaze";
 	int argc;
 	char** argv;
 	char** env;

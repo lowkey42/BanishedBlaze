@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 2.6)
 # include core
 add_subdirectory(core)
 
-project(into_the_light)
+project(banished_blaze)
 
-set(VERSION_NAME "0.2")
+set(VERSION_NAME "0.1")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024 -std=c++14 -Wextra -Wall -pedantic -Werror -Wno-unused-parameter -Wno-unused-private-field")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024 -std=c++1z -Wextra -Wall -pedantic -Werror -Wno-unused-parameter -Wno-unused-private-field")
 
 option(DO_LTO "Enables LTO" OFF)
 if(DO_LTO)
@@ -100,7 +100,7 @@ if(EMSCRIPTEN)
 	file(COPY ${ROOT_DIR}/assets/archives.lst DESTINATION "./")
 	file(COPY ${ROOT_DIR}/assets/assets DESTINATION "./")
 	file(COPY ${ROOT_DIR}/assets/assets_ext DESTINATION "./")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file archives.lst --preload-file assets --preload-file assets_ext -o IntoTheLight.html")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file archives.lst --preload-file assets --preload-file assets_ext -o BanishedBlaze.html")
 else()
 #	file(COPY ${ROOT_DIR}/assets/archives.lst DESTINATION ${BIN_DIR})
 #	file(COPY ${ROOT_DIR}/assets/assets DESTINATION ${BIN_DIR})
@@ -141,12 +141,12 @@ file(GLOB_RECURSE MAGNUM_SRCS
 		 game/*.cpp
 		 game/*.h*)
 
-add_executable(IntoTheLight main.cpp ${MAGNUM_SRCS} "${CMAKE_CURRENT_BINARY_DIR}/info.cpp")
+add_executable(BanishedBlaze main.cpp ${MAGNUM_SRCS} "${CMAKE_CURRENT_BINARY_DIR}/info.cpp")
 
 if(EMSCRIPTEN)
-	target_link_libraries(IntoTheLight ${SDL2_LIBRARY} core)
+	target_link_libraries(BanishedBlaze ${SDL2_LIBRARY} core)
 else()
-	target_link_libraries(IntoTheLight ${SDL2_LIBRARY} core happyhttp)
+	target_link_libraries(BanishedBlaze ${SDL2_LIBRARY} core happyhttp)
 endif()
 
 

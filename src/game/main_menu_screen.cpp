@@ -56,9 +56,8 @@ namespace lux {
 		};
 
 
-		struct nk_panel layout;
 		auto ctx = _engine.gui().ctx();
-		if(nk_begin(ctx, &layout, "main_menu", _engine.gui().centered(200, 300), NK_WINDOW_BORDER)) {
+		if(nk_begin(ctx, "main_menu", _engine.gui().centered(200, 300), NK_WINDOW_BORDER)) {
 
 			gui::begin_menu(ctx, _active_menu_entry);
 

@@ -327,8 +327,7 @@ namespace lux {
 			} else {
 				auto load_text = _engine.translator().translate("editor", "loading").c_str();
 
-				nk_panel p;
-				nk_begin_titled(_engine.gui().ctx(), &p, "loading",
+				nk_begin_titled(_engine.gui().ctx(), "loading",
 				                load_text,
 				                _engine.gui().centered(200, 120),
 				                NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_TITLE);

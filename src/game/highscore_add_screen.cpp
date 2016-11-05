@@ -102,9 +102,8 @@ namespace lux {
 		};
 
 
-		struct nk_panel layout;
 		auto ctx = _engine.gui().ctx();
-		if(nk_begin(ctx, &layout, "add_score", _engine.gui().centered(400, 600), NK_WINDOW_BORDER)) {
+		if(nk_begin(ctx, "add_score", _engine.gui().centered(400, 600), NK_WINDOW_BORDER)) {
 
 			if(_highscore_list || _highscore_list.try_load()) {
 				auto rank = _highscore_list->get_rank(_time);
