@@ -1,7 +1,7 @@
 Banished Blaze
 ==========
 
-A puzzle plattformer in which the player transforms into a beam of light, to phase trough objects and reflect off of the environment to reach and rekindle the fires at the end of each level as fest as possible.
+A puzzle plattformer in which the player transforms into a beam of light, to phase through objects and reflect off of the environment to reach and rekindle the fires at the end of each level as fast as possible.
 
 
 
