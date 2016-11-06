@@ -32,9 +32,12 @@ namespace renderer {
 		vertex
 	};
 
+	extern void preprocess_shader(Shader_type type, std::string& source, const std::string& name,
+	                              asset::Asset_manager& assets);
+
 	class Shader {
 		public:
-			Shader(Shader_type type, const std::string& source, const std::string& name)throw(Shader_compiler_error);
+			Shader(Shader_type type, const std::string& source, const std::string& name);
 			~Shader()noexcept;
 
 			Shader& operator=(Shader&&);
@@ -63,7 +66,7 @@ namespace renderer {
 			Shader_program& attach_shader(std::shared_ptr<const Shader> shader);
 			Shader_program& bind_all_attribute_locations(const Vertex_layout&);
 			Shader_program& bind_attribute_location(const std::string& name, int l);
-			Shader_program& build()throw(Shader_compiler_error);
+			Shader_program& build();
 			Shader_program& uniforms(std::unique_ptr<IUniform_map>&&);
 			Shader_program& detach_all();
 
@@ -81,10 +84,24 @@ namespace renderer {
 			Shader_program& set_uniform(const char* name, const glm::mat4& value);
 
 		private:
-			template<class T>
+			template<class T, class=void>
 			struct Uniform_entry {
 				int handle;
 				T last_value;
+
+				Uniform_entry() : handle(0) {}
+				Uniform_entry(int handle, const T& value) : handle(handle), last_value(value) {}
+				bool dirty(const T& v)const {return last_value!=v;}
+				void set(const T& v) {last_value=v;}
+			};
+			template<class T>
+			struct Uniform_entry<T, std::enable_if_t<sizeof(T)>=5*sizeof(float)>> {
+				int handle;
+
+				Uniform_entry() : handle(0) {}
+				Uniform_entry(int handle, const T&) : handle(handle) {}
+				bool dirty(const T&)const {return true;}
+				void set(const T&) {}
 			};
 			template<class T>
 			using Uniform_cache = std::unordered_map<std::string, Uniform_entry<T>>;
@@ -119,22 +136,28 @@ namespace asset {
 	struct Loader<renderer::Shader> {
 		using RT = std::shared_ptr<renderer::Shader>;
 
-		static RT load(istream in) throw(Loading_failed){
+		static RT load(istream in) {
+			auto shader_type = renderer::Shader_type::fragment;
+
 			switch(in.aid().type()) {
 				case "frag_shader"_strid:
-					return std::make_shared<renderer::Shader>(renderer::Shader_type::fragment, in.content(), in.aid().str());
+					shader_type = renderer::Shader_type::fragment;
+					break;
 
 				case "vert_shader"_strid:
-					return std::make_shared<renderer::Shader>(renderer::Shader_type::vertex, in.content(), in.aid().str());
+					shader_type = renderer::Shader_type::vertex;
+					break;
 
 				default:
-					break;
+					throw Loading_failed("Unsupported assetId for shader: "+in.aid().str());
 			}
 
-			throw Loading_failed("Unsupported assetId for shader: "+in.aid().str());
+			auto src = in.content();
+			preprocess_shader(shader_type, src, in.aid().str(), in.manager());
+			return std::make_shared<renderer::Shader>(shader_type, src, in.aid().str());
 		}
 
-		static void store(istream out, const renderer::Shader&) throw(Loading_failed) {
+		static void store(istream, const renderer::Shader&) {
 			throw Loading_failed("Saving shaders is not supported!");
 		}
 	};

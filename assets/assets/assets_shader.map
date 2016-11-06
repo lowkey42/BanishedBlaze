@@ -1,3 +1,5 @@
+shader: = shader/
+
 vert_shader:simple = shader/simple.vert
 frag_shader:simple = shader/simple.frag
 

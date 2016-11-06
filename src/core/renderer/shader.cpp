@@ -16,6 +16,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include <regex>
+
 
 namespace lux {
 namespace renderer {
@@ -70,7 +72,33 @@ namespace renderer {
 		}
 	}
 
-	Shader::Shader(Shader_type type, const std::string& source, const std::string& name)throw(Shader_compiler_error)
+
+	void preprocess_shader(Shader_type type, std::string& source, const std::string& name,
+	                       asset::Asset_manager& assets) {
+		static const std::regex include_regex("#include <([^>]*)>");
+
+		std::smatch match;
+		while(std::regex_search(source, match, include_regex)) {
+			auto included_name = std::string(match[1]);
+
+			auto in = assets.load_raw(asset::AID{"shader"_strid, included_name});
+			INVARIANT(in.is_some(), "Couldn't find shader '"<<included_name<<"' included in '"<<name<<"'");
+
+			auto included_src = in.get_or_throw().content();
+			auto begin = source.begin()+match.position();
+			source.replace(begin, begin+match.length(),
+			               included_src.begin(), included_src.end());
+		}
+
+
+		static const std::regex skip_regex("#skip begin\n(.|\n)*?#skip end\n");
+
+		while(std::regex_search(source, match, skip_regex)) {
+			source.erase(match.position(), match.length());
+		}
+	}
+
+	Shader::Shader(Shader_type type, const std::string& source, const std::string& name)
 	    : _name(name) {
 		char const * source_pointer = source.c_str();
 		int len = source.length();
@@ -156,7 +184,7 @@ namespace renderer {
 		return *this;
 	}
 
-	Shader_program& Shader_program::build()throw(Shader_compiler_error) {
+	Shader_program& Shader_program::build() {
 		for(auto& s : _attached_shaders)
 			glAttachShader(_handle, s->_handle);
 
@@ -250,9 +278,9 @@ namespace renderer {
 				it = cache.emplace(name,
 				                   ET{glGetUniformLocation(shader_handle, name), value}).first;
 				dirty = true;
-			} else if(it->second.last_value!=value) {
+			} else if(it->second.dirty(value)) {
 				dirty = true;
-				it->second.last_value = value;
+				it->second.set(value);
 			}
 
 			return std::make_pair(dirty, it->second.handle);

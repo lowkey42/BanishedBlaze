@@ -38,18 +38,13 @@ namespace util {
 			 pos += replace.length();
 		}
 
-	    return subject;
+		return subject;
 	}
 
 	inline std::string replace(std::string subject, const std::string& search,
 	                          const std::string& replace) {
-	    size_t pos = 0;
-	    while ((pos = subject.find(search, pos)) != std::string::npos) {
-	         subject.replace(pos, search.length(), replace);
-	         pos += replace.length();
-	    }
-
-	    return subject;
+		replace_inplace(subject, search, replace);
+		return subject;
 	}
 
 	template <class T>
