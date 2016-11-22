@@ -4,6 +4,7 @@
 #include <core/renderer/command_queue.hpp>
 #include <core/renderer/uniform_map.hpp>
 #include <core/renderer/texture.hpp>
+#include <core/renderer/framebuffer.hpp>
 #include <core/renderer/texture_batch.hpp>
 #include <core/renderer/primitives.hpp>
 
@@ -15,46 +16,47 @@ namespace lux {
 
 	namespace {
 
-		constexpr auto global_uniforms = 6+sys::light::light_uniforms;
-		constexpr auto global_uniforms_size = 6*(4*4)+sys::light::light_uniforms_size;
-		constexpr auto global_uniforms_avg_size = (int)(global_uniforms_size/global_uniforms + 0.5f);
+		using Global_uniform_map = renderer::Uniform_map<64,
+		                                                 32*4*4*sizeof(float)>;
 
-		using Global_uniform_map = renderer::Uniform_map<global_uniforms,
-		                                                 global_uniforms_avg_size*sizeof(float)>;
-
-		auto shadowbuffer_size(Engine& engine) {
-			return glm::vec2{
-				engine.graphics_ctx().settings().width * engine.graphics_ctx().settings().supersampling,
-				engine.graphics_ctx().settings().height * engine.graphics_ctx().settings().supersampling};
+		auto framebuffer_size(Engine& engine) {
+			return glm::vec2{engine.graphics_ctx().settings().width,
+			                 engine.graphics_ctx().settings().height}
+			       * engine.graphics_ctx().settings().supersampling;
 		}
 
 		auto create_framebuffer(Engine& engine) {
-			auto size = shadowbuffer_size(engine);
-			return Framebuffer{
-				static_cast<int>(size.x),
-				static_cast<int>(size.y),
-				true, true};
+			auto size = framebuffer_size(engine);
+			auto framebuffer = Framebuffer(int(size.x), int(size.y));
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGB_16F);
+			framebuffer.add_depth_attachment("depth"_strid);
+			framebuffer.build();
+
+			return framebuffer;
 		}
 		auto create_effect_framebuffer(Engine& engine) {
-			auto size = shadowbuffer_size(engine);
-			return Framebuffer{
-				static_cast<int>(size.x),
-				static_cast<int>(size.y),
-				false, true};
+			auto size = framebuffer_size(engine);
+			auto framebuffer = Framebuffer(int(size.x), int(size.y));
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGB_16F);
+			framebuffer.build();
+
+			return framebuffer;
 		}
 		auto create_decals_framebuffer(Engine& engine) {
-			auto size = shadowbuffer_size(engine) / 2.f;
-			return Framebuffer{
-				static_cast<int>(size.x),
-				static_cast<int>(size.y),
-				false, false};
+			auto size = framebuffer_size(engine) / 2.f;
+			auto framebuffer = Framebuffer(int(size.x), int(size.y));
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGB);
+			framebuffer.build();
+
+			return framebuffer;
 		}
 		auto create_blur_framebuffer(Engine& engine) {
-			auto size = shadowbuffer_size(engine) / 2.f;
-			return Framebuffer{
-				static_cast<int>(size.x),
-				static_cast<int>(size.y),
-				false, true};
+			auto size = framebuffer_size(engine) / 2.f;
+			auto framebuffer = Framebuffer(int(size.x), int(size.y));
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGB_16F);
+			framebuffer.build();
+
+			return framebuffer;
 		}
 	}
 
@@ -69,7 +71,7 @@ namespace lux {
 			{
 				render_queue.shared_uniforms(std::make_unique<Global_uniform_map>());
 
-				auto blur_size = shadowbuffer_size(engine) / 2.f;
+				auto blur_size = framebuffer_size(engine) / 2.f;
 
 				post_shader.attach_shader(engine.assets().load<Shader>("vert_shader:post"_aid))
 				            .attach_shader(engine.assets().load<Shader>("frag_shader:post"_aid))
@@ -79,7 +81,7 @@ namespace lux {
 				                "texture", int(Texture_unit::last_frame),
 				                "texture_glow", int(Texture_unit::temporary),
 				                "gamma", graphics_ctx.settings().gamma,
-				                "texture_size", shadowbuffer_size(engine),
+				                "texture_size", framebuffer_size(engine),
 				                "exposure", 1.0f,
 				                "bloom", (graphics_ctx.settings().bloom ? 1.f : 0.f)
 				            ));
@@ -110,6 +112,17 @@ namespace lux {
 				           .uniforms(make_uniform_map(
 				                "texture", int(Texture_unit::last_frame)
 				            ));
+
+
+				// cache the textures of each framebuffer
+				canvas_texture[0] = &canvas[0].get_attachment("color"_strid);
+				canvas_texture[1] = &canvas[1].get_attachment("color"_strid);
+
+				blur_canvas_texture[0] = &blur_canvas[0].get_attachment("color"_strid);
+				blur_canvas_texture[1] = &blur_canvas[1].get_attachment("color"_strid);
+
+				motion_blur_canvas_texture = &motion_blur_canvas.get_attachment("color"_strid);
+				decals_canvas_texture = &decals_canvas.get_attachment("color"_strid);
 			}
 
 			Graphics_ctx& graphics_ctx;
@@ -119,12 +132,17 @@ namespace lux {
 			renderer::Shader_program motion_blur_shader;
 			renderer::Shader_program glow_shader;
 
-			renderer::Framebuffer canvas[2];
-			renderer::Framebuffer blur_canvas[2];
-			renderer::Framebuffer motion_blur_canvas;
-			bool                  canvas_first_active = true;
+			renderer::Framebuffer    canvas[2];
+			const renderer::Texture* canvas_texture[2];
+			bool                     canvas_first_active = true;
 
-			renderer::Framebuffer decals_canvas;
+			renderer::Framebuffer    blur_canvas[2];
+			const renderer::Texture* blur_canvas_texture[2];
+			renderer::Framebuffer    motion_blur_canvas;
+			const renderer::Texture* motion_blur_canvas_texture;
+
+			renderer::Framebuffer    decals_canvas;
+			const renderer::Texture* decals_canvas_texture;
 
 			glm::vec2 motion_blur_dir;
 			float motion_blur_intensity = 0.f;
@@ -132,21 +150,34 @@ namespace lux {
 			auto& active_canvas() {
 				return canvas[canvas_first_active ? 0: 1];
 			}
+			auto& active_canvas_texture() {
+				return *canvas_texture[canvas_first_active ? 0: 1];
+			}
+			auto& inactive_canvas() {
+				return canvas[canvas_first_active ? 1: 0];
+			}
 
 			void flush() {
-				{
-					auto fbo_cleanup = Framebuffer_binder{active_canvas()};
-					active_canvas().clear();
+				debug_draw_framebuffer(active_canvas());
+				auto& canvas = active_canvas();
+				canvas.bind_target();
+				canvas.set_viewport();
+				canvas.clear({0,0,0}, true);
 
-					render_queue.flush();
-				}
+				render_queue.flush();
+
+				auto depth1_cleanup = Disable_depthtest{};
+				auto depth2_cleanup = Disable_depthwrite{};
+
+				auto& current_frame = active_canvas_texture();
 
 				if(graphics_ctx.settings().bloom) {
-					auto fbo_cleanup = Framebuffer_binder{blur_canvas[0]};
+					blur_canvas[0].bind_target();
+					blur_canvas[0].set_viewport();
 					blur_canvas[0].clear();
 
 					glow_shader.bind();
-					renderer::draw_fullscreen_quad(active_canvas(), Texture_unit::last_frame);
+					renderer::draw_fullscreen_quad(current_frame, Texture_unit::last_frame);
 
 					blur_shader.bind();
 
@@ -155,32 +186,33 @@ namespace lux {
 						auto src = i%2;
 						auto dest = src>0?0:1;
 
-						auto fbo_cleanup = Framebuffer_binder{blur_canvas[dest]};
+						blur_canvas[dest].bind_target();
 
 						blur_shader.set_uniform("horizontal", i%2==0);
-						renderer::draw_fullscreen_quad(blur_canvas[src], Texture_unit::temporary);
+						renderer::draw_fullscreen_quad(*blur_canvas_texture[src], Texture_unit::temporary);
 					}
 
-					blur_canvas[0].bind(int(Texture_unit::temporary));
+					blur_canvas_texture[0]->bind(int(Texture_unit::temporary));
 
 					if(motion_blur_intensity>0.f) {
 						motion_blur_shader.bind();
 						motion_blur_shader.set_uniform("dir", motion_blur_dir*motion_blur_intensity);
 
 						motion_blur_canvas.bind_target();
+						motion_blur_canvas.set_viewport();
 						motion_blur_canvas.clear();
-						renderer::draw_fullscreen_quad(active_canvas(), Texture_unit::last_frame);
+						renderer::draw_fullscreen_quad(current_frame, Texture_unit::last_frame);
 						active_canvas().bind_target();
-						renderer::draw_fullscreen_quad(motion_blur_canvas, Texture_unit::last_frame);
-						active_canvas().unbind_target();
-						active_canvas().bind(int(Texture_unit::last_frame));
+						renderer::draw_fullscreen_quad(*motion_blur_canvas_texture, Texture_unit::last_frame);
+						current_frame.bind(int(Texture_unit::last_frame));
 					}
 				}
 
+				bind_default_framebuffer();
 				graphics_ctx.reset_viewport();
-				post_shader.bind().set_uniform("exposure", 1.0f);
-				post_shader.bind().set_uniform("contrast_boost", motion_blur_intensity);
-				renderer::draw_fullscreen_quad(active_canvas(), Texture_unit::last_frame);
+				post_shader.bind().set_uniform("exposure", 1.0f)
+				                  .set_uniform("contrast_boost", motion_blur_intensity);
+				renderer::draw_fullscreen_quad(current_frame, Texture_unit::last_frame);
 
 				canvas_first_active = !canvas_first_active;
 			}
@@ -192,7 +224,7 @@ namespace lux {
 	      physics(engine, entity_manager),
 	      controller(engine, entity_manager, physics),
 	      camera(engine, entity_manager),
-	      lights(engine.bus(), entity_manager, engine.assets(), engine.graphics_ctx()),
+	      lights(engine.graphics_ctx(), entity_manager, engine.assets()),
 	      renderer(engine.bus(), entity_manager, engine.assets()),
 	      gameplay(engine, entity_manager, physics, camera, controller),
 	      sound(engine, entity_manager),
@@ -216,10 +248,9 @@ namespace lux {
 			sun_dir = sun_dir / sun_dir_len;
 		}
 
-		lights.config(sun_light,
-		              sun_dir,
-		              ambient_brightness,
-		              background_tint);
+		lights.config().dir_light_color     = sun_light;
+		lights.config().dir_light_direction = sun_dir;
+		lights.config().ambient_light       = environment_brightness;
 
 		using namespace glm;
 		_skybox.tint(vec3(ambient_brightness) + sun_light);
@@ -228,10 +259,9 @@ namespace lux {
 	}
 	void Meta_system::light_config(Rgb sun_light, glm::vec3 sun_dir, float ambient_brightness,
 	                               Rgba background_tint) {
-		lights.config(sun_light,
-		              sun_dir,
-		              ambient_brightness,
-		              background_tint);
+
+		lights.config().dir_light_color     = sun_light;
+		lights.config().dir_light_direction = sun_dir;
 
 		using namespace glm;
 		_skybox.tint(vec3(ambient_brightness) + sun_light);
@@ -298,37 +328,48 @@ namespace lux {
 		const renderer::Camera& cam = cam_mb.get_or_other(camera.camera());
 
 		auto& queue = _post_renderer->render_queue;
-		_post_renderer->decals_canvas.bind(int(Texture_unit::decals));
+		_post_renderer->decals_canvas.get_attachment("color"_strid).bind(int(Texture_unit::decals));
 
-		auto uniforms = queue.shared_uniforms();
+		auto& uniforms = *queue.shared_uniforms();
 		const auto fast_lighting = _engine.graphics_ctx().settings().fast_lighting;
-		uniforms->emplace("fast_lighting", fast_lighting);
+		uniforms.emplace("fast_lighting", fast_lighting);
 
-		if(!fast_lighting) {
-			renderer.draw_shadowcaster(lights.shadowcaster_batch(), cam);
-		}
-		lights.prepare_draw(queue, cam, !fast_lighting);
+		// draw objects to batches but don't flush to queue, yet
+		renderer.draw(cam);
 
+		// draw shadowmaps
+		renderer.flush_occluders(lights.occluder_command_queue());
+		auto light_quality = 1.0f;// fast_lighting ? 0.f : 1.f;
+		lights.pre_draw(queue.shared_uniforms(), cam, light_quality);
+
+		// draw decals
 		{
 			// reuses the shadow/light camera, that is further away from the scene,
 			//  so this has to be drawn before the vp is reset
+			auto depth1_cleanup = Disable_depthtest{};
+			auto depth2_cleanup = Disable_depthwrite{};
 			auto blend_cleanup = Blend_add{};
-			auto fbo_cleanup = Framebuffer_binder{_post_renderer->decals_canvas};
+			_post_renderer->decals_canvas.bind_target();
+			_post_renderer->decals_canvas.set_viewport();
 			_post_renderer->decals_canvas.clear();
 			renderer.draw_decals(queue, cam);
 			queue.flush();
 		}
 
-		uniforms->emplace("view", cam.view());
-		uniforms->emplace("proj", cam.proj());
-		uniforms->emplace("vp", cam.vp());
-		uniforms->emplace("vp_inv", glm::inverse(cam.vp()));
-		uniforms->emplace("eye", cam.eye_position());
+		// draw all objects
+		uniforms.emplace("view", cam.view());
+		uniforms.emplace("proj", cam.proj());
+		uniforms.emplace("vp", cam.vp());
+		uniforms.emplace("vp_inv", glm::inverse(cam.vp()));
+		uniforms.emplace("eye", cam.eye_position());
 
-		renderer.draw(queue, cam);
+		renderer.flush_objects(queue);
 
 		_skybox.draw(queue);
 
+		lights.draw_light_volumns(queue, _post_renderer->inactive_canvas().get_attachment("depth"_strid));
+
+		// draw post effects and flush
 		_post_renderer->motion_blur_dir = camera.motion_blur_dir();
 		_post_renderer->motion_blur_intensity = camera.motion_blur();
 		_post_renderer->flush();

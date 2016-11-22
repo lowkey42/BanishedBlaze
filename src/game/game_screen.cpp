@@ -106,10 +106,7 @@ namespace lux {
 			_reset_gameplay = false;
 
 			// reset the game to be ready for continue
-			_systems.light_config(_org_sun_light.get_or_throw(),
-			                      _systems.lights.sun_dir(),
-			                      _systems.lights.ambient_brightness(),
-			                      _systems.lights.background_tint());
+			_systems.lights.config().dir_light_color = _org_sun_light.get_or_throw();
 			_fadeout = false;
 			_fadeout_fadetimer = 0_s;
 			_systems.gameplay.reset();
@@ -148,15 +145,11 @@ namespace lux {
 			_fadeout_fadetimer+=dt;
 
 			if(_org_sun_light.is_nothing()) {
-				_org_sun_light = _systems.lights.sun_light();
+				_org_sun_light = _systems.lights.config().dir_light_color;
 			}
-
-			_systems.light_config(glm::mix(_org_sun_light.get_or_throw(),
-			                               fadeout_sun,
-			                               _fadeout_fadetimer/fadeout_delay),
-			                      _systems.lights.sun_dir(),
-			                      _systems.lights.ambient_brightness(),
-			                      _systems.lights.background_tint());
+			_systems.lights.config().dir_light_color = glm::mix(_org_sun_light.get_or_throw(),
+			                                                    fadeout_sun,
+			                                                    _fadeout_fadetimer/fadeout_delay);
 
 			if(_fadeout_fadetimer>=fadeout_delay) {
 				unlock_next_levels(_engine, _current_level);

@@ -8,7 +8,7 @@
 		"color": {"r":1.0, "g":7.0, "b":0.25},
 		"radius": 8,
 		"offset": {"y":0.25, "z": 1.0},
-		"shadowcaster": false
+		"shadowcaster": true
 	},
 	"Enlightened": {
 		"color": "cyan",

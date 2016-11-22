@@ -12,7 +12,7 @@
 		"color": {"r":0.25, "g":0.25, "b":5.0},
 		"radius": 7,
 		"offset": {"y":0.25, "z": 1.0},
-		"shadowcaster": false
+		"shadowcaster": true
 	},
 	"Enlightened": {
 		"color": "blue",

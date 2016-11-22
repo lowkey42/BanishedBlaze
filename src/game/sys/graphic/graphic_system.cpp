@@ -16,19 +16,16 @@ namespace graphic {
 	using namespace unit_literals;
 
 	namespace {
-		constexpr auto background_boundary = -10.f;
-
-		auto build_background_shader(asset::Asset_manager& asset_manager) -> Shader_program {
+		auto build_occluder_shader(asset::Asset_manager& asset_manager) -> Shader_program {
 			Shader_program prog;
 			prog.attach_shader(asset_manager.load<Shader>("vert_shader:sprite"_aid))
-			    .attach_shader(asset_manager.load<Shader>("frag_shader:sprite_bg"_aid))
+			    .attach_shader(asset_manager.load<Shader>("frag_shader:sprite_shadow"_aid))
 			    .bind_all_attribute_locations(sprite_layout)
 			    .build()
 			    .uniforms(make_uniform_map(
 			                  "albedo_tex", int(Texture_unit::color),
-			                  "normal_tex", int(Texture_unit::normal),
-			                  "material_tex", int(Texture_unit::material),
-			                  "environment_tex", int(Texture_unit::environment)
+			                  "height_tex", int(Texture_unit::height),
+			                  "model", glm::mat4()
 			    ));
 
 			return prog;
@@ -48,7 +45,7 @@ namespace graphic {
 	        util::Message_bus& bus,
 	        ecs::Entity_manager& entity_manager,
 	        asset::Asset_manager& asset_manager)
-	    : _background_shader(build_background_shader(asset_manager)),
+	    : _occluder_shader(build_occluder_shader(asset_manager)),
 	      _mailbox(bus),
 	      _sprites(entity_manager.list<Sprite_comp>()),
 	      _anim_sprites(entity_manager.list<Anim_sprite_comp>()),
@@ -57,7 +54,7 @@ namespace graphic {
 	      _decals(entity_manager.list<Decal_comp>()),
 	      _particle_renderer(asset_manager),
 	      _sprite_batch(512),
-	      _sprite_batch_bg(_background_shader, 256),
+	      _sprite_batch_occluder(_occluder_shader, 256),
 	      _decal_batch(32, false)
 	{
 		entity_manager.register_component_type<Sprite_comp>();
@@ -68,9 +65,11 @@ namespace graphic {
 		_mailbox.subscribe_to<16, 128>([&](const State_change& e) {
 			this->_on_state_change(e);
 		});
+
+		_sprite_batch_occluder.ignore_order(true);
 	}
 
-	void Graphic_system::draw(renderer::Command_queue& queue, const renderer::Camera& camera)const {
+	void Graphic_system::draw(const renderer::Camera&)const {
 		for(Sprite_comp& sprite : _sprites) {
 			auto& trans = sprite.owner().get<physics::Transform_comp>().get_or_throw();
 
@@ -93,10 +92,10 @@ namespace graphic {
 			    sprite._hue_change_replacement / 360_deg
 			};
 
-			if(position.z<background_boundary) {
-				_sprite_batch_bg.insert(sprite_data);
-			} else {
-				_sprite_batch.insert(sprite_data);
+			_sprite_batch.insert(sprite_data);
+
+			if(sprite._shadowcaster && std::abs(position.z) < 1.0f) {
+				_sprite_batch_occluder.insert(sprite_data);
 			}
 		}
 
@@ -122,10 +121,10 @@ namespace graphic {
 			    sprite._hue_change_replacement / 360_deg
 			};
 
-			if(position.z<background_boundary) {
-				_sprite_batch_bg.insert(sprite_data);
-			} else {
-				_sprite_batch.insert(sprite_data);
+			_sprite_batch.insert(sprite_data);
+
+			if(sprite._shadowcaster && std::abs(position.z) < 1.0f) {
+				_sprite_batch_occluder.insert(sprite_data);
 			}
 		}
 
@@ -133,57 +132,22 @@ namespace graphic {
 			auto& trans = terrain.owner().get<physics::Transform_comp>().get_or_throw();
 			auto position = remove_units(trans.position());
 
-			if(position.z<background_boundary) {
-				terrain._smart_texture.draw(position, _sprite_batch_bg);
-			} else {
-				terrain._smart_texture.draw(position, _sprite_batch);
-			}
-		}
-
-		_sprite_batch.flush(queue);
-		_sprite_batch_bg.flush(queue);
-
-		_particle_renderer.draw(queue);
-	}
-	void Graphic_system::draw_shadowcaster(renderer::Sprite_batch& batch,
-	                                       const renderer::Camera&)const {
-		for(Sprite_comp& sprite : _sprites) {
-			auto& trans = sprite.owner().get<physics::Transform_comp>().get_or_throw();
-
-			auto position = remove_units(trans.position());
-
-			if(sprite._shadowcaster && std::abs(position.z) < 1.0f) {
-				batch.insert(renderer::Sprite{position, trans.rotation(),
-				             sprite._size*trans.scale(),
-				             flip(glm::vec4{0,0,1,1}, trans.flip_vertical(), trans.flip_horizontal()),
-				             sprite._shadowcaster ? 1.0f : 0.0f,
-				             sprite._decals_intensity, *sprite._material});
-			}
-		}
-
-		for(Anim_sprite_comp& sprite : _anim_sprites) {
-			auto& trans = sprite.owner().get<physics::Transform_comp>().get_or_throw();
-
-			auto position = remove_units(trans.position());
-
-			if(sprite._shadowcaster && std::abs(position.z) < 1.0f) {
-				batch.insert(renderer::Sprite{position, trans.rotation(),
-				             sprite._size*trans.scale(),
-				             flip(sprite.state().uv_rect(), trans.flip_vertical(), trans.flip_horizontal()),
-				             sprite._shadowcaster ? 1.0f : 0.0f,
-				             sprite._decals_intensity, sprite.state().material()});
-			}
-		}
-
-		for(Terrain_comp& terrain : _terrains) {
-			auto& trans = terrain.owner().get<physics::Transform_comp>().get_or_throw();
-			auto position = remove_units(trans.position());
+			terrain._smart_texture.draw(position, _sprite_batch);
 
 			if(terrain._smart_texture.shadowcaster() && std::abs(position.z) < 1.0f) {
-				terrain._smart_texture.draw(position, batch);
+				terrain._smart_texture.draw(position, _sprite_batch_occluder);
 			}
 		}
 	}
+
+	void Graphic_system::flush_occluders(renderer::Command_queue& queue) {
+		_sprite_batch_occluder.flush(queue);
+	}
+	void Graphic_system::flush_objects(renderer::Command_queue& queue) {
+		_sprite_batch.flush(queue);
+		_particle_renderer.draw(queue);
+	}
+
 
 	void Graphic_system::draw_decals(renderer::Command_queue& queue,
 	                                 const renderer::Camera&)const {

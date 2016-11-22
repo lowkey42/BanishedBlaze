@@ -59,6 +59,10 @@ namespace renderer {
 		_order_dependent = 1;
 		return *this;
 	}
+	Command& Command::order_independent() {
+		_order_dependent = 0;
+		return *this;
+	}
 	Command& Command::require(Gl_option opt) {
 		_gl_options = _gl_options | opt;
 		return *this;
@@ -160,7 +164,10 @@ namespace renderer {
 		return _shared_uniforms;
 	}
 
-	void Command_queue::flush() {
+	bool Command_queue::flush() {
+		if(_commands.empty() && _order_dependent_commands.empty())
+			return false;
+
 		std::sort(_commands.begin(), _commands.end());
 
 		Command last;
@@ -172,7 +179,11 @@ namespace renderer {
 		// reset GL_options if required
 		update_gl_options(last._gl_options, default_gl_options);
 
-		// clear our queue
+		clear();
+		return true;
+	}
+
+	void Command_queue::clear() {
 		_commands.clear();
 		_order_dependent_commands.clear();
 	}

@@ -11,6 +11,7 @@
 
 #include "graphics_ctx.hpp"
 
+#include "debug_renderer.hpp"
 #include "text.hpp"
 #include "sprite_batch.hpp"
 #include "texture_batch.hpp"
@@ -56,12 +57,9 @@ namespace renderer {
 
 		void enable_required_extensions() {
 #ifdef EMSCRIPTEN
-			enable_extension("ANGLE_instanced_arrays");
-			enable_extension("OES_texture_float");
+			enable_extension("EXT_color_buffer_float");
+			enable_extension("EXT_texture_filter_anisotropic");
 			enable_extension("OES_texture_float_linear");
-			enable_extension("OES_vertex_array_object");
-			enable_extension("WEBGL_depth_texture");
-			enable_extension("WEBGL_draw_buffers");
 #else
 			(void) enable_extension;
 #endif
@@ -190,22 +188,30 @@ namespace renderer {
 		}
 
 
-#ifndef EMSCRIPTEN
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#ifdef EMSCRIPTEN
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#else
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 #endif
+
+#ifdef _NDEBUG
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
+
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-		int win_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
+		auto win_flags = Uint32(SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
 
-		auto display = _settings->display;
+		auto display = static_cast<unsigned int>(_settings->display);
 #ifndef EMSCRIPTEN
 		_window.reset(SDL_CreateWindow(_name.c_str(),
-		                               SDL_WINDOWPOS_CENTERED_DISPLAY(display), SDL_WINDOWPOS_CENTERED_DISPLAY(display),
+		                               int(SDL_WINDOWPOS_CENTERED_DISPLAY(display)), int(SDL_WINDOWPOS_CENTERED_DISPLAY(display)),
 		                               _settings->width, _settings->height, win_flags) );
 
 		if (!_window)
@@ -277,6 +283,7 @@ namespace renderer {
 		init_texture_renderer(assets);
 		init_materials(assets);
 		init_primitives(assets);
+		init_debug_renderer(assets, *this);
 	}
 
 	Graphics_ctx::~Graphics_ctx() {
@@ -320,6 +327,9 @@ namespace renderer {
 			SDL_SetWindowTitle(_window.get(), osstr.str().c_str());
 #endif
 		}
+
+		on_frame_debug_draw();
+
 		SDL_GL_SwapWindow(_window.get());
 	}
 	void Graphics_ctx::set_clear_color(float r, float g, float b) {

@@ -429,7 +429,7 @@ namespace gui {
 		    : camera(e.graphics_ctx().viewport(), calculate_vscreen(e, 1000)),
 		      renderer(e),
 		      atlas(e),
-		      atlas_tex(atlas.width, atlas.height, atlas.data, Texture_format::RGBA),
+		      atlas_tex(atlas.width, atlas.height, Texture_format::RGBA, atlas.data),
 		      input_filter(e, &ctx.ctx, camera) {
 
 			camera.position(camera.size()/2.f);

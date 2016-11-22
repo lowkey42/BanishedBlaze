@@ -162,7 +162,7 @@ namespace renderer {
 			glDeleteProgram(v);
 		}
 	}
-	Shader_program::Prog_handle::operator int()const noexcept {
+	Shader_program::Prog_handle::operator unsigned int()const noexcept {
 		INVARIANT(v!=0, "Access to moved from shader_program");
 		return v;
 	}
@@ -184,10 +184,18 @@ namespace renderer {
 		return *this;
 	}
 
+	Shader_program& Shader_program::frag_data(unsigned int index, const std::string name) {
+		_frag_data_locations.emplace_back(index, name);
+		return *this;
+	}
+
 	Shader_program& Shader_program::build() {
 		for(auto& s : _attached_shaders)
 			glAttachShader(_handle, s->_handle);
 
+		for(auto& frag_data : _frag_data_locations) {
+			glBindFragDataLocation(_handle, std::get<0>(frag_data), std::get<1>(frag_data).c_str());
+		}
 
 		glLinkProgram(_handle);
 

@@ -130,7 +130,7 @@ void main() {
 
 	} else {
 		for(int i=0; i<2; i++) {
-			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) * calc_shadow(i);
+			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) ;//* calc_shadow(i);
 		}
 		for(int i=2; i<8; i++) {
 			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance);

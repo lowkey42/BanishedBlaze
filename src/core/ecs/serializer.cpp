@@ -40,7 +40,7 @@ namespace lux {
 				std::string content;
 				asset::Ptr<Blueprint> parent;
 				asset::Asset_manager* asset_mgr;
-				mutable Entity_manager* entity_manager;
+				mutable Entity_manager* entity_manager = nullptr;
 		};
 
 

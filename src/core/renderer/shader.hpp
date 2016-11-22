@@ -17,6 +17,8 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <tuple>
+
 
 namespace lux {
 namespace renderer {
@@ -66,6 +68,7 @@ namespace renderer {
 			Shader_program& attach_shader(std::shared_ptr<const Shader> shader);
 			Shader_program& bind_all_attribute_locations(const Vertex_layout&);
 			Shader_program& bind_attribute_location(const std::string& name, int l);
+			Shader_program& frag_data(unsigned int index, const std::string name);
 			Shader_program& build();
 			Shader_program& uniforms(std::unique_ptr<IUniform_map>&&);
 			Shader_program& detach_all();
@@ -107,16 +110,17 @@ namespace renderer {
 			using Uniform_cache = std::unordered_map<std::string, Uniform_entry<T>>;
 
 			struct Prog_handle {
-				int v;
+				unsigned int v;
 				Prog_handle();
 				Prog_handle(Prog_handle&&)noexcept;
 				Prog_handle& operator=(Prog_handle&&)noexcept;
 				~Prog_handle();
-				operator int()const noexcept;
+				operator unsigned int()const noexcept;
 			};
 
 			Prog_handle _handle;
 			std::vector<std::shared_ptr<const Shader>> _attached_shaders;
+			std::vector<std::tuple<unsigned int, std::string>> _frag_data_locations;
 			std::unique_ptr<IUniform_map> _uniforms;
 
 			Uniform_cache<int> _uniform_locations_int;

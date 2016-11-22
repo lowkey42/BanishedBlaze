@@ -231,11 +231,18 @@ namespace renderer {
 
 		auto cmd = create_command()
 		        .shader(_shader)
+		        .require(Gl_option::blend)
 		        .object(_objects.at(obj_idx));
 
 		cmd.uniforms().emplace("alpha_cutoff",begin->material->alpha() ? 1.f/255 : 0.9f);
 
 		begin->material->set_textures(cmd);
+
+		if(_ignore_order) {
+			cmd.order_independent();
+			cmd.require_not(Gl_option::depth_test);
+			cmd.require_not(Gl_option::depth_write);
+		}
 
 		cmd.uniforms().emplace("model", glm::mat4());
 

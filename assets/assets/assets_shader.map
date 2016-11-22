@@ -3,6 +3,9 @@ shader: = shader/
 vert_shader:simple = shader/simple.vert
 frag_shader:simple = shader/simple.frag
 
+vert_shader:debug = shader/simple.vert
+frag_shader:debug = shader/debug.frag
+
 vert_shader:orb = shader/orb.vert
 frag_shader:orb = shader/orb.frag
 
@@ -26,11 +29,11 @@ frag_shader:post = shader/post.frag
 vert_shader:shadowmap = shader/shadowmap.vert
 frag_shader:shadowmap = shader/shadowmap.frag
 
-vert_shader:shadowfinal = shader/shadowfinal.vert
-frag_shader:shadowfinal = shader/shadowfinal.frag
-
 vert_shader:shadow_blur = shader/shadow_blur.vert
 frag_shader:shadow_blur = shader/shadow_blur.frag
+
+vert_shader:light_volumn = shader/light_volumn.vert
+frag_shader:light_volumn = shader/light_volumn.frag
 
 vert_shader:blur = shader/blur.vert
 frag_shader:blur = shader/blur.frag

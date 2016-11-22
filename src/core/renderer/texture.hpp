@@ -20,17 +20,19 @@ namespace lux {
 namespace renderer {
 
 	struct Texture_loading_failed : public asset::Loading_failed {
-		explicit Texture_loading_failed(const std::string& msg)noexcept : Loading_failed(msg){}
+		explicit Texture_loading_failed(const std::string& msg)noexcept;
 	};
 
 	enum Texture_format {
-		RGB, RGBA
+		DEPTH,    RG,     RGB,     RGBA,
+		DEPTH_16, RG_16F, RGB_16F, RGBA_16F,
+		DEPTH_24, RG_32F, RGB_32F, RGBA_32F
 	};
 
 	class Texture {
 		public:
-			explicit Texture(std::vector<uint8_t> buffer, bool cubemap) throw(Texture_loading_failed);
-			Texture(int width, int height, const uint8_t* data, Texture_format format);
+			explicit Texture(std::vector<uint8_t> buffer, bool cubemap);
+			Texture(int width, int height, Texture_format format, const uint8_t* data=nullptr, bool linear_filtered=true);
 			virtual ~Texture()noexcept;
 
 			Texture& operator=(Texture&&)noexcept;
@@ -51,14 +53,13 @@ namespace renderer {
 			Texture& operator=(const Texture&) = delete;
 
 		protected:
-			Texture(int width, int height, int bpp=8);
 			Texture(const Texture&, glm::vec4 clip)noexcept;
 			void _update(const Texture&, glm::vec4 clip);
 
 			unsigned int _handle;
+			int          _width, _height;
 			bool         _cubemap = false;
 			bool         _owner = true;
-			int          _width, _height;
 			glm::vec4    _clip {0,0,1,1};
 	};
 	using Texture_ptr = asset::Ptr<Texture>;
@@ -81,34 +82,6 @@ namespace renderer {
 	};
 	using Texture_atlas_ptr = asset::Ptr<Texture_atlas>;
 
-
-	class Framebuffer : public Texture {
-		public:
-			Framebuffer(int width, int height, bool depth_buffer, bool hdr);
-			~Framebuffer()noexcept;
-
-			Framebuffer& operator=(Framebuffer&&)noexcept;
-			Framebuffer(Framebuffer&& s)noexcept;
-
-
-			void clear(glm::vec3 color=glm::vec3(0,0,0));
-			void bind_target();
-			void unbind_target();
-			void set_viewport();
-
-		private:
-			unsigned int _fb_handle;
-			unsigned int _db_handle;
-	};
-
-	struct Framebuffer_binder {
-		Framebuffer_binder(Framebuffer& fb);
-		~Framebuffer_binder()noexcept;
-
-		Framebuffer& fb;
-		int old_viewport[4];
-	};
-
 } /* namespace renderer */
 
 
@@ -117,11 +90,11 @@ namespace asset {
 	struct Loader<renderer::Texture_atlas> {
 		using RT = std::shared_ptr<renderer::Texture_atlas>;
 
-		static RT load(istream in) throw(Loading_failed){
+		static RT load(istream in) {
 			return std::make_shared<renderer::Texture_atlas>(std::move(in));
 		}
 
-		static void store(ostream out, const renderer::Texture_atlas& asset) throw(Loading_failed) {
+		static void store(ostream, const renderer::Texture_atlas&) {
 			FAIL("NOT IMPLEMENTED!");
 		}
 	};
@@ -130,12 +103,12 @@ namespace asset {
 	struct Loader<renderer::Texture> {
 		using RT = std::shared_ptr<renderer::Texture>;
 
-		static RT load(istream in) throw(Loading_failed) {
+		static RT load(istream in) {
 			constexpr auto cube_aid = util::Str_id{"tex_cube"};
 			return std::make_shared<renderer::Texture>(in.bytes(), in.aid().type()==cube_aid);
 		}
 
-		static void store(ostream out, const renderer::Texture& asset) throw(Loading_failed) {
+		static void store(ostream, const renderer::Texture&) {
 			FAIL("NOT IMPLEMENTED!");
 		}
 	};
@@ -143,7 +116,7 @@ namespace asset {
 	template<>
 	struct Interceptor<renderer::Texture> {
 		static auto on_intercept(Asset_manager& manager, const AID& interceptor_aid,
-		                         const AID& org_aid) throw(Loading_failed) {
+		                         const AID& org_aid) {
 			auto atlas = manager.load<renderer::Texture_atlas>(interceptor_aid);
 
 			return atlas->get(org_aid.name());

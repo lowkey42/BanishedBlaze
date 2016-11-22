@@ -96,6 +96,8 @@ namespace renderer {
 			            const std::vector<Sprite_vertex>& vertices);
 			void flush(Command_queue&);
 
+			void ignore_order(bool b) {_ignore_order = b;}
+
 		private:
 			using Vertex_citer = std::vector<Sprite_vertex>::const_iterator;
 			using Vertex_iter = std::vector<Sprite_vertex>::iterator;
@@ -105,6 +107,7 @@ namespace renderer {
 			std::vector<Sprite_vertex>    _vertices;
 			std::vector<renderer::Object> _objects;
 			std::size_t                   _free_obj = 0;
+			bool                          _ignore_order = false;
 
 			void _draw(Command_queue&);
 			auto _draw_part(Vertex_citer begin, Vertex_citer end) -> Command;

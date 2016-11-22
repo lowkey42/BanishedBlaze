@@ -17,16 +17,19 @@ namespace renderer {
 
 	using namespace glm;
 
+	Texture_loading_failed::Texture_loading_failed(const std::string& msg)noexcept : Loading_failed(msg){}
+
+
 #define CLAMP_TO_EDGE 0x812F
 
-	Texture::Texture(std::vector<uint8_t> buffer, bool cubemap) throw(Texture_loading_failed)
+	Texture::Texture(std::vector<uint8_t> buffer, bool cubemap)
 	    : _cubemap(cubemap) {
 
 		if(!cubemap) {
 			_handle = SOIL_load_OGL_texture_from_memory
 			(
 				buffer.data(),
-				buffer.size(),
+				int(buffer.size()),
 				SOIL_LOAD_AUTO,
 				SOIL_CREATE_NEW_ID,
 				0,
@@ -37,7 +40,7 @@ namespace renderer {
 			_handle = SOIL_load_OGL_single_cubemap_from_memory
 			(
 				buffer.data(),
-				buffer.size(),
+				int(buffer.size()),
 				SOIL_DDS_CUBEMAP_FACE_ORDER,
 				SOIL_LOAD_AUTO,
 				SOIL_CREATE_NEW_ID,
@@ -48,7 +51,7 @@ namespace renderer {
 		if(!_handle)
 			throw Texture_loading_failed(SOIL_last_result());
 
-		auto tex_type = _cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
+		auto tex_type = GLenum(_cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D);
 
 		bind(0);
 		glTexParameteri(tex_type, GL_TEXTURE_MIN_FILTER, _cubemap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
@@ -57,63 +60,109 @@ namespace renderer {
 		glTexParameteri(tex_type, GL_TEXTURE_WRAP_T, CLAMP_TO_EDGE);
 		glBindTexture(tex_type, 0);
 	}
-	Texture::Texture(int width, int height, int bpp) : _width(width), _height(height) {
-		glGenTextures( 1, &_handle );
-		glBindTexture( GL_TEXTURE_2D, _handle );
-
-#if defined(EMSCRIPTEN) || defined(ANDROID)
-		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, _width, _height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-#else
-		switch(bpp) {
-			case 8:
-				glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, _width, _height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-				break;
-
-			case 16:
-				glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA16F, _width, _height, 0, GL_RGBA, GL_FLOAT, 0);
-				break;
-
-			case 32:
-				glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F, _width, _height, 0, GL_RGBA, GL_FLOAT, 0);
-				break;
-
-			default:
-				FAIL("Unsupported bits-per-pixel: "<<bpp);
-		}
-#endif
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, CLAMP_TO_EDGE);
-	}
-	Texture::Texture(const Texture& base, glm::vec4 clip)noexcept
-	    : _handle(base._handle),
-	      _owner(false),
-	      _width(base._width * (clip.z-clip.x)),
-	      _height(base._height * (clip.w-clip.y)),
-	      _clip(clip) {
-	}
-	Texture::Texture(int width, int height, const uint8_t* data,
-	                 Texture_format format)
+	Texture::Texture(int width, int height, Texture_format format, const uint8_t* data, bool linear_filtered)
 	    : _width(width), _height(height) {
-
-		auto gl_format = format==Texture_format::RGB ? GL_RGB : GL_RGBA;
 
 		glGenTextures(1, &_handle);
 		glBindTexture(GL_TEXTURE_2D, _handle);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0,
-		             GLenum(gl_format), GL_UNSIGNED_BYTE, data);
+
+		GLint gl_internal_format;
+		GLenum gl_format;
+		GLenum gl_type;
+
+		switch(format) {
+			case Texture_format::DEPTH:
+				gl_internal_format = GL_DEPTH_COMPONENT;
+				gl_format = GL_DEPTH_COMPONENT;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+			case Texture_format::DEPTH_16:
+				gl_internal_format = GL_DEPTH_COMPONENT16;
+				gl_format = GL_DEPTH_COMPONENT;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+			case Texture_format::DEPTH_24:
+				gl_internal_format = GL_DEPTH_COMPONENT24;
+				gl_format = GL_DEPTH_COMPONENT;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+
+			case Texture_format::RG:
+				gl_internal_format = GL_RG;
+				gl_format = GL_RG;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+			case Texture_format::RG_16F:
+				gl_internal_format = GL_RG16F;
+				gl_format = GL_RG;
+				gl_type = GL_FLOAT;
+				break;
+			case Texture_format::RG_32F:
+				gl_internal_format = GL_RG32F;
+				gl_format = GL_RG;
+				gl_type = GL_FLOAT;
+				break;
+
+			case Texture_format::RGB:
+				gl_internal_format = GL_RGB;
+				gl_format = GL_RGB;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+			case Texture_format::RGB_16F:
+				gl_internal_format = GL_RGB16F;
+				gl_format = GL_RGB;
+				gl_type = GL_FLOAT;
+				break;
+			case Texture_format::RGB_32F:
+				gl_internal_format = GL_RGB32F;
+				gl_format = GL_RGB;
+				gl_type = GL_FLOAT;
+				break;
+
+			case Texture_format::RGBA:
+				gl_internal_format = GL_RGBA;
+				gl_format = GL_RGBA;
+				gl_type = GL_UNSIGNED_BYTE;
+				break;
+			case Texture_format::RGBA_16F:
+				gl_internal_format = GL_RGBA16F;
+				gl_format = GL_RGBA;
+				gl_type = GL_FLOAT;
+				break;
+			case Texture_format::RGBA_32F:
+				gl_internal_format = GL_RGBA32F;
+				gl_format = GL_RGBA;
+				gl_type = GL_FLOAT;
+				break;
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, gl_internal_format, _width, _height, 0, gl_format, gl_type, data);
+
+		if(linear_filtered) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, CLAMP_TO_EDGE);
+	}
+
+	Texture::Texture(const Texture& base, glm::vec4 clip)noexcept
+	    : _handle(base._handle),
+	      _width (int(base._width  * (clip.z-clip.x))),
+	      _height(int(base._height * (clip.w-clip.y))),
+	      _owner(false),
+	      _clip(clip) {
 	}
 
 	void Texture::_update(const Texture& base, glm::vec4 clip) {
 		INVARIANT(!_owner, "_update is only supported for non-owning textures!");
 
 		_handle = base._handle;
-		_width = base._width * (clip.z-clip.x);
-		_height = base._height * (clip.w-clip.y);
+		_width  = int(base._width * (clip.z-clip.x));
+		_height = int(base._height * (clip.w-clip.y));
 		_clip = clip;
 	}
 
@@ -123,8 +172,8 @@ namespace renderer {
 	}
 
 	Texture::Texture(Texture&& rhs)noexcept
-	    : _handle(rhs._handle), _cubemap(rhs._cubemap), _owner(rhs._owner), _width(rhs._width),
-	      _height(rhs._height), _clip(rhs._clip) {
+	    : _handle(rhs._handle), _width(rhs._width),
+	      _height(rhs._height), _cubemap(rhs._cubemap), _owner(rhs._owner), _clip(rhs._clip) {
 
 		rhs._handle = 0;
 	}
@@ -148,7 +197,7 @@ namespace renderer {
 		auto tex = GL_TEXTURE0+index;
 		INVARIANT(tex<GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, "to many textures");
 
-		glActiveTexture(GL_TEXTURE0 + index);
+		glActiveTexture(GLenum(GL_TEXTURE0 + index));
 		glBindTexture(_cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, _handle);
 	}
 
@@ -252,84 +301,6 @@ namespace renderer {
 	Atlas_texture::~Atlas_texture() {
 		if(_atlas)
 			_atlas->_subs.erase(_name);
-	}
-
-
-	Framebuffer::Framebuffer(int width, int height, bool depth_buffer, bool hdr)
-		: Texture(width, height, hdr?16:8), _fb_handle(0), _db_handle(0) {
-
-		glGenFramebuffers(1, &_fb_handle);
-		glBindFramebuffer(GL_FRAMEBUFFER, _fb_handle);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _handle, 0);
-
-		if(depth_buffer) {
-			glGenRenderbuffers(1, &_db_handle);
-			glBindRenderbuffer(GL_RENDERBUFFER, _db_handle);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-									  GL_RENDERBUFFER, _db_handle);
-		}
-
-		INVARIANT(glCheckFramebufferStatus(GL_FRAMEBUFFER)==GL_FRAMEBUFFER_COMPLETE, "Couldn't create framebuffer!");
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-	Framebuffer::Framebuffer(Framebuffer&& rhs)noexcept
-		: Texture(std::move(rhs)), _fb_handle(rhs._fb_handle), _db_handle(rhs._db_handle) {
-
-		rhs._fb_handle = 0;
-		rhs._db_handle = 0;
-	}
-	Framebuffer::~Framebuffer()noexcept {
-		if(_fb_handle)
-			glDeleteFramebuffers(1, &_fb_handle);
-
-		if(_db_handle)
-			glDeleteRenderbuffers(1, &_db_handle);
-	}
-	Framebuffer& Framebuffer::operator=(Framebuffer&& rhs)noexcept {
-		if(_fb_handle)
-			glDeleteFramebuffers(1, &_fb_handle);
-
-		if(_db_handle)
-			glDeleteRenderbuffers(1, &_db_handle);
-
-		Texture::operator=(std::move(rhs));
-
-		_fb_handle = rhs._fb_handle;
-		_db_handle = rhs._db_handle;
-
-		rhs._fb_handle = 0;
-		rhs._db_handle = 0;
-
-		return *this;
-	}
-
-	void Framebuffer::set_viewport() {
-		glViewport(0,0, width(), height());
-	}
-
-	void Framebuffer::clear(glm::vec3 color) {
-		glClearColor(color.r, color.g, color.b, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT | (_db_handle ? GL_DEPTH_BUFFER_BIT : 0));
-	}
-
-	void Framebuffer::bind_target() {
-		glBindFramebuffer(GL_FRAMEBUFFER, _fb_handle);
-		glViewport(0,0, width(), height());
-	}
-	void Framebuffer::unbind_target() {
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-
-	Framebuffer_binder::Framebuffer_binder(Framebuffer& fb) : fb(fb) {
-		glGetIntegerv(GL_VIEWPORT, old_viewport);
-		fb.bind_target();
-	}
-	Framebuffer_binder::~Framebuffer_binder()noexcept {
-		fb.unbind_target();
-		glViewport(old_viewport[0], old_viewport[1], old_viewport[2], old_viewport[3]);
 	}
 
 } /* namespace renderer */

@@ -73,6 +73,7 @@ namespace renderer {
 			auto texture(Texture_unit, const Texture&) -> Command&;
 			auto object(const Object&) -> Command&;
 			auto order_dependent() -> Command&;
+			auto order_independent() -> Command&;
 			auto require(Gl_option) -> Command&;
 			auto require_not(Gl_option) -> Command&;
 			auto ext_uniforms(const IUniform_map&) -> Command&;
@@ -107,7 +108,8 @@ namespace renderer {
 			auto shared_uniforms(std::shared_ptr<IUniform_map>) -> IUniform_map&;
 			auto shared_uniforms() -> std::shared_ptr<IUniform_map>;
 
-			void flush();
+			bool flush();
+			void clear();
 			void push_back(const Command& command);
 
 		private:

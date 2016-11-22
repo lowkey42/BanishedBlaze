@@ -61,9 +61,7 @@ namespace util {
 
 		void on_end()override {
 			stacktrace_log_target::on_end();
-			auto str = stream.str();
-			stream.str(std::string{});
-			throw Error(str);
+			std::abort();
 		}
 	};
 
