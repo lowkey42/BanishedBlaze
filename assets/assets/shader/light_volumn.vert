@@ -1,4 +1,4 @@
-#version 100
+#version 330 core
 precision mediump float;
 
 struct Point_light {
@@ -11,20 +11,20 @@ struct Point_light {
 };
 
 
-attribute vec2 xy;
-attribute vec2 uv;
+in vec2 xy;
+in vec2 uv;
 
-varying vec2 world_uv_frag;
-varying vec2 shadowmap_uv_frag;
-varying vec2 shadowmap_luv_frag;
-varying vec3 world_pos_frag;
-varying vec3 light_pos_frag;
-varying vec3 factors_frag;
-varying vec3 color_frag;
-varying float radius_frag;
+out vec2 world_uv_frag;
+out vec2 shadowmap_uv_frag;
+out vec2 shadowmap_luv_frag;
+out vec3 world_pos_frag;
+out vec3 light_pos_frag;
+out vec3 factors_frag;
+out vec3 color_frag;
+out float radius_frag;
 
 uniform Point_light light[8];
-uniform int current_light_index;
+uniform mediump int current_light_index;
 
 uniform mat4 vp;
 uniform mat4 vp_light;

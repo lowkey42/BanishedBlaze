@@ -32,7 +32,7 @@ namespace light {
 		static_assert(NUM_LIGHTS_MACRO==max_lights, "Update the NUM_LIGHTS_MACRO macro!");
 
 		constexpr auto shadowed_lights = 4;
-		constexpr auto shadowmap_size = 1024;
+		constexpr auto shadowmap_size = 1024*4;
 		constexpr auto shadowmap_rows = shadowed_lights;
 
 		constexpr auto blur_min_quality = 0.25f;

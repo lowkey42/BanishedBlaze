@@ -1,19 +1,19 @@
-#version 100
+#version 330 core
 precision mediump float;
 
-varying vec2 shadowmap_uv_frag;
-varying vec2 shadowmap_luv_frag;
-varying vec2 world_uv_frag;
-varying vec3 world_pos_frag;
-varying vec3 light_pos_frag;
-varying vec3 factors_frag;
-varying vec3 color_frag;
-varying float radius_frag;
+in vec2 shadowmap_uv_frag;
+in vec2 shadowmap_luv_frag;
+in vec2 world_uv_frag;
+in vec3 world_pos_frag;
+in vec3 light_pos_frag;
+in vec3 factors_frag;
+in vec3 color_frag;
+in float radius_frag;
 
 uniform sampler2D shadowmaps_tex;
 uniform sampler2D depth_tex;
 uniform mat4 vp_inv;
-uniform int current_light_index;
+uniform mediump int current_light_index;
 
 
 vec3 pixel_position(vec2 uv, float depth) {
@@ -24,17 +24,72 @@ vec3 pixel_position(vec2 uv, float depth) {
 float linstep(float low, float high, float v){
 	return clamp((v-low)/(high-low), 0.0, 1.0);
 }
-float smoothstep(float edge0, float edge1, float x) {
-	x = clamp((x-edge0)/(edge1-edge0), 0.0, 1.0);
-	return x*x*(3.0-2.0*x);
+
+// A single iteration of Bob Jenkins' One-At-A-Time hashing algorithm.
+uint hash( uint x ) {
+    x += ( x << 10u );
+    x ^= ( x >>  6u );
+    x += ( x <<  3u );
+    x ^= ( x >> 11u );
+    x += ( x << 15u );
+    return x;
 }
 
+
+
+// Compound versions of the hashing algorithm I whipped together.
+uint hash( uvec2 v ) { return hash( v.x ^ hash(v.y)                         ); }
+uint hash( uvec3 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z)             ); }
+uint hash( uvec4 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z) ^ hash(v.w) ); }
+
+
+
+// Construct a float with half-open range [0:1] using low 23 bits.
+// All zeroes yields 0.0, all ones yields the next smallest representable value below 1.0.
+float floatConstruct( uint m ) {
+    const uint ieeeMantissa = 0x007FFFFFu; // binary32 mantissa bitmask
+    const uint ieeeOne      = 0x3F800000u; // 1.0 in IEEE binary32
+
+    m &= ieeeMantissa;                     // Keep only mantissa bits (fractional part)
+    m |= ieeeOne;                          // Add fractional part to 1.0
+
+    float  f = uintBitsToFloat( m );       // Range [1:2]
+    return f - 1.0;                        // Range [0:1]
+}
+
+
+
+// Pseudo-random value in half-open range [0:1].
+float random( float x ) { return floatConstruct(hash(floatBitsToUint(x))); }
+float random( vec2  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+float random( vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+
+
+
 vec3 sample_shadow_ray(vec2 tc, float r) {
+	r/=2.0;
+	
+	vec3 color= vec3(0,0,0);
+		
+	for(float x=0.0; x<8.0; x+=1.0) {
+			//vec4 shadowmap = texture2D(shadowmaps_tex, tc+vec2(x,0.0)*0.001);
+			vec2 coord = vec2(tc.x + (random(tc+vec2(x))-0.5)*0.02, tc.y);
+			vec4 shadowmap = texture2D(shadowmaps_tex, coord);
+			
+			color.r += smoothstep(r-0.001, r, shadowmap.r);
+			color.g += smoothstep(r-0.001, r, shadowmap.g);
+			color.b += smoothstep(r-0.001, r, shadowmap.b);
+	}
+	
+	return color / (8.0);
+	
 	vec4 shadowmap = texture2D(shadowmaps_tex, tc);
 
 	//step(vec3(r/2.0), shadowmap.rgb);
 	// TODO:
 
+	
 
 	return step(vec3(r/2.0), shadowmap.rgb);
 
