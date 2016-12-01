@@ -29,6 +29,9 @@ uniform sampler2D material_tex;
 uniform sampler2D height_tex;
 
 uniform sampler2D shadowmap_0_tex;
+uniform sampler2D shadowmap_1_tex;
+uniform sampler2D shadowmap_2_tex;
+uniform sampler2D shadowmap_3_tex;
 
 uniform sampler2D decals_tex;
 uniform samplerCube environment_tex;
@@ -123,18 +126,9 @@ void main() {
 	vec3 color = vec3(0.0);
 
 
-	if(fast_lighting) {
-		for(int i=0; i<4; i++) {
-			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance);
-		}
-
-	} else {
-		for(int i=0; i<2; i++) {
-			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) * calc_shadow(i);
-		}
-		for(int i=2; i<8; i++) {
-			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance);
-		}
+	
+	for(int i=0; i<4; i++) {
+		color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) * calc_shadow(i);
 	}
 
 	// in low-light scene, discard colors but keep down-scaled luminance

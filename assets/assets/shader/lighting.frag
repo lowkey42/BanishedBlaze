@@ -23,6 +23,9 @@ varying float decals_intensity_frag;
 varying mat3 TBN;
 
 uniform sampler2D shadowmap_0_tex;
+uniform sampler2D shadowmap_1_tex;
+uniform sampler2D shadowmap_2_tex;
+uniform sampler2D shadowmap_3_tex;
 
 uniform sampler2D decals_tex;
 uniform samplerCube environment_tex;
@@ -96,10 +99,14 @@ vec3 calc_shadow(int light_num) {
 
 	if(light_num==0)
 		shadow = texture2D(shadowmap_0_tex, shadowmap_uv_frag).rgb;
+	else if(light_num==1)
+		shadow = texture2D(shadowmap_1_tex, shadowmap_uv_frag).rgb;
+	else if(light_num==2)
+		shadow = texture2D(shadowmap_2_tex, shadowmap_uv_frag).rgb;
+	else if(light_num==3)
+		shadow = texture2D(shadowmap_3_tex, shadowmap_uv_frag).rgb;
 
-	// TODO
-
-
+	return shadow; // TODO
 	return mix(shadow, vec3(1.0), shadow_resistence_frag*0.9);
 }
 

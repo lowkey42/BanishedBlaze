@@ -27,7 +27,7 @@ vec2 get_position() {
 
 vec4 raycast(vec2 position, vec2 dir) {
 	vec4 distances = vec4(1,1,1,1)*100.0;
-	for (float dist=0.01; dist<1.0; dist+=1.0/(256.0)) {
+	for (float dist=0.0; dist<1.0; dist+=1.0/(256.0)) {
 		vec2 target = dist*dir*2.0 + position;
 
 		vec3 occluder = texture2D(occlusions, ndc2uv(target)).rgb;
@@ -47,12 +47,6 @@ vec4 raycast(vec2 position, vec2 dir) {
 	return distances;
 }
 
-float pack_vec2(vec2 input) {
-	input.x = floor(input.x * (4096.0-1.0));
-	input.y = floor(input.y * (4096.0-1.0));
-
-	return (input.x*4096.0) + input.y;
-}
 
 // TODO: optimize
 void main() {
@@ -61,46 +55,6 @@ void main() {
 	vec2 position = get_position();
 	float theta = uv_frag.x * 2.0 * PI;
 	vec2 dir = vec2(cos(theta), sin(theta));
-	float radius = 0.01;
-	float tangent = radius * vec2(-dir.y, dir.x);
 
-	vec4 distances = raycast(position, dir);
-//	float distance_left = raycast(position + tangent, dir).a;
-//	float distance_right = raycast(position - tangent, dir).a;
-
-
-	float depth = distances.a;
-	float dx = dFdx(depth);
-	float moment = depth*depth + 0.25*(dx*dx);
-
-	gl_FragColor = vec4(distances.rgba);//pack_vec2(vec2(distance_left, distance_right)));
-
-	/*
-	vec2 position = get_position();
-	float theta = uv_frag.x * 2.0 * PI;
-	vec2 dir = vec2(cos(theta), sin(theta));
-
-	vec3 distances = vec3(1,1,1);
-	for (float dist=0.0; dist<1.0; dist+=1.0/(1024.0)) {
-		vec2 target = dist*dir*2.0 + position;
-
-		vec3 occluder = texture2D(occlusions, ndc2uv(target)).rgb;
-
-		if(occluder.r>=0.999)
-			distances.r = min(distances.r, dist);
-		if(occluder.g>=0.999)
-			distances.g = min(distances.g, dist);
-		if(occluder.b>=0.999)
-			distances.b = min(distances.b, dist);
-	}
-
-	float depth = min(distances.r, min(distances.g,distances.b));
-	float dx = dFdx(depth);
-	float moment = depth*depth + 0.25*(dx*dx);
-
-	if(depth<=0.01)
-		gl_FragColor = vec4(0,0,0,0);
-	else
-		gl_FragColor = vec4(distances, moment);
-	*/
+	gl_FragColor = raycast(position, dir);
 }

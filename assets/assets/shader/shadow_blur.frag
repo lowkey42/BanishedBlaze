@@ -25,5 +25,5 @@ void main() {
 	result += texture2D(texture, uv_r2) * 0.09447039785044732;
 	result += texture2D(texture, uv_r3) * 0.010381362401148057;
 
-	gl_FragColor = mix(center, result, 1.0); // TODO: maybe lerp based on distance
+	gl_FragColor = result;
 }

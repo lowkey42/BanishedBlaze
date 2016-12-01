@@ -32,7 +32,7 @@ void main() {
 	vec4 pos_vp0 = vp_light * vec4(position.xy + decals_offset.xy, position.z/4.0, 1);
 	decals_uv_frag = pos_vp0.xy/pos_vp0.w/2.0+0.5;
 
-	shadowmap_uv_frag = pos_lvp.xy/pos_lvp.w/2.0+0.5;
+	shadowmap_uv_frag = pos_vp.xy/pos_vp.w/2.0+0.5;
 	uv_frag = uv;
 	uv_clip_frag = uv_clip;
 	pos_frag = position;
