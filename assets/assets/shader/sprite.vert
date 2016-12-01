@@ -26,7 +26,7 @@ uniform mat4 vp_light;
 
 void main() {
 	vec4 pos_vp = vp * vec4(position, 1);
-	vec4 pos_lvp = vp_light * vec4(position, 1);
+	vec4 pos_lvp = vp * vec4(position.x, position.y, 0.0, 1);
 	gl_Position = pos_vp;
 
 	vec4 pos_vp0 = vp_light * vec4(position.xy + decals_offset.xy, position.z/4.0, 1);

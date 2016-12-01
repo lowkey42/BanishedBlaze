@@ -32,10 +32,10 @@ namespace light {
 		static_assert(NUM_LIGHTS_MACRO==max_lights, "Update the NUM_LIGHTS_MACRO macro!");
 
 		constexpr auto shadowed_lights = 4;
-		constexpr auto shadowmap_size = 1024;
+		constexpr auto shadowmap_size = 512;
 		constexpr auto shadowmap_rows = shadowed_lights;
 
-		constexpr auto blur_min_quality = 0.25f;
+//		constexpr auto blur_min_quality = 0.25f;
 
 
 		auto create_occlusion_framebuffer(Graphics_ctx& graphics_ctx) {
@@ -46,14 +46,24 @@ namespace light {
 
 			return framebuffer;
 		}
-		auto create_shadowmap_framebuffer(Graphics_ctx&) {
+		auto create_distance_framebuffer(Graphics_ctx&) {
 			auto shadowmap_size_factor = 1.0f; // TODO: get from settings
 			auto framebuffer = Framebuffer(int(shadowmap_size*shadowmap_size_factor), shadowmap_rows);
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGBA_16F, true);
+			framebuffer.build();
+
+			return framebuffer;
+		}
+		auto create_shadow_framebuffer(Graphics_ctx& graphics_ctx) {
+			auto shadowmap_size_factor = 0.25f; // TODO: get from settings
+			auto framebuffer = Framebuffer(int(graphics_ctx.settings().width  * shadowmap_size_factor),
+			                               int(graphics_ctx.settings().height * shadowmap_size_factor));
 			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGBA_16F);
 			framebuffer.build();
 
 			return framebuffer;
 		}
+
 		auto create_unit_circle_mesh() -> std::vector<Simple_vertex> {
 			constexpr const auto steps = 12;
 
@@ -92,25 +102,36 @@ namespace light {
 
 	      _occluder_queue(1),
 	      _occlusion_map(create_occlusion_framebuffer(graphics_ctx)),
-	      _shadowmaps(create_shadowmap_framebuffer(graphics_ctx)),
-	      _final_shadowmaps(create_shadowmap_framebuffer(graphics_ctx)) {
+	      _distance_map(create_distance_framebuffer(graphics_ctx)),
+	      _shadow_map_tmp(create_shadow_framebuffer(graphics_ctx)) {
 
 		entity_manager.register_component_type<Light_comp>();
+
+		_shadow_maps.reserve(shadowed_lights);
+		for(auto i=0; i<shadowed_lights; i++) {
+			_shadow_maps.emplace_back(create_shadow_framebuffer(graphics_ctx));
+
+			const auto unit = int(Texture_unit::shadowmap_0) + i;
+			_shadow_maps.back().get_attachment("color"_strid).bind(unit);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
 
 		_relevant_lights.resize(max_lights * 4);
 
 		_occlusion_map_texture    = &_occlusion_map.get_attachment("color"_strid);
-		_shadowmaps_texture       = &_shadowmaps.get_attachment("color"_strid);
-		_final_shadowmaps_texture = &_final_shadowmaps.get_attachment("color"_strid);
+		_distance_map_texture     = &_distance_map.get_attachment("color"_strid);
 
-		_shadowmaps_texture->bind();
+		_occlusion_map_texture->bind();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		_distance_map_texture->bind();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		_final_shadowmaps_texture->bind();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		_raw_shadowmap_shader
+
+		_distance_shader
 		        .attach_shader(asset_manager.load<Shader>("vert_shader:shadowmap"_aid))
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadowmap"_aid))
 		        .bind_all_attribute_locations(renderer::simple_vertex_layout)
@@ -120,23 +141,34 @@ namespace light {
 		            "shadowmap_size", shadowmap_size
 		        ));
 
+		_shadow_shader
+		        .attach_shader(asset_manager.load<Shader>("vert_shader:shadowfinal"_aid))
+		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadowfinal"_aid))
+		        .bind_all_attribute_locations(renderer::simple_vertex_layout)
+		        .build()
+		        .uniforms(make_uniform_map(
+		            "distance_map_tex", 0,
+		            "occlusions", 1
+		        ));
+
 		_light_volumn_shader
 		        .attach_shader(asset_manager.load<Shader>("vert_shader:light_volumn"_aid))
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:light_volumn"_aid))
 		        .bind_all_attribute_locations(light_volumn_vertex_layout)
 		        .build()
 		        .uniforms(make_uniform_map(
-		           "shadowmaps_tex", int(Texture_unit::shadowmaps),
-		           "depth_tex", int(Texture_unit::height)
+		            "shadowmap_tex", 0,
+		            "depth_tex", int(Texture_unit::height)
 		        ));
 
+		auto& shadowmap_tex = _shadow_map_tmp.get_attachment("color"_strid);
 		_blur_shader.attach_shader(asset_manager.load<Shader>("vert_shader:shadow_blur"_aid))
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadow_blur"_aid))
 		        .bind_all_attribute_locations(renderer::simple_vertex_layout)
 		        .build()
 		        .uniforms(make_uniform_map(
 		            "texture", 0,
-		            "texture_size", glm::vec2(shadowmap_size, shadowmap_rows*2.0)
+		            "texture_size", glm::vec2(shadowmap_tex.width(), shadowmap_tex.height())
 		        ));
 	}
 
@@ -161,28 +193,22 @@ namespace light {
 		_collect_lights();
 		_set_uniforms(uniforms, camera, quality);
 
-		if(quality>0.f) {
-			_flush_occlusion_map();
-			auto db = Disable_blend{};
-			_render_shadow_maps(quality);
-			_blur_shadows_maps(quality);
+		_flush_occlusion_map();
+		uniforms.emplace("vp", camera.vp());
+		uniforms.emplace("vp_inv", glm::inverse(camera.vp()));
 
-		} else {
-			FAIL("asd");
-			if(glm::abs(quality-_prev_quality)>0.0001f) {
-				_occluder_queue.clear();
-				_final_shadowmaps.bind_target();
-				_final_shadowmaps.set_viewport();
-				_final_shadowmaps.clear(glm::vec3{1,1,1}, false);
-			}
-		}
+		auto db = Disable_blend{};
+		_render_shadow_maps(quality);
+		_blur_shadows_maps(quality);
 
-		_final_shadowmaps_texture->bind(int(Texture_unit::shadowmaps));
+		uniforms.emplace("vp", _light_vp);
+
 		_prev_quality = quality;
 
 		debug_draw_framebuffer(_occlusion_map);
-		debug_draw_framebuffer(_shadowmaps);
-		debug_draw_framebuffer(_final_shadowmaps);
+
+		for(auto& shadow_map : _shadow_maps)
+			debug_draw_framebuffer(shadow_map);
 	}
 
 	void Light_system::draw_light_volumns(Command_queue& queue, const Texture& last_depth) {
@@ -197,6 +223,10 @@ namespace light {
 
 		for(auto i=0; i<max_lights; i++) {
 			cmd.uniforms().emplace("current_light_index", i);
+			if(i<int(_shadow_maps.size())) {
+				cmd.texture(Texture_unit::temporary, _shadow_maps[std::size_t(i)].get_attachment("color"_strid));
+			}
+
 			queue.push_back(cmd);
 		}
 	}
@@ -234,6 +264,7 @@ namespace light {
 		auto view = camera.view();
 		view[3] = glm::vec4(-_light_cam_pos, 1.f);
 		_light_vp = camera.proj() * view;
+		_vp = camera.vp();
 
 		uniforms.emplace("vp", _light_vp);
 		uniforms.emplace("vp_light", _light_vp);
@@ -300,39 +331,46 @@ namespace light {
 	}
 
 	void Light_system::_render_shadow_maps(float quality) {
-		_raw_shadowmap_shader.bind();
-		_raw_shadowmap_shader.set_uniform("light_quality", quality);
-		bind_light_positions(_raw_shadowmap_shader, _relevant_lights);
+		_distance_shader.bind();
+		_occlusion_map_texture->bind(1);
+		_distance_shader.set_uniform("light_quality", quality);
+		bind_light_positions(_distance_shader, _relevant_lights);
 
-		// skip blur step for low quality
-		if(quality >= blur_min_quality) {
-			_shadowmaps.bind_target();
-			_shadowmaps.set_viewport();
-		} else {
-			_final_shadowmaps.bind_target();
-			_final_shadowmaps.set_viewport();
-		}
+		_distance_map.bind_target();
+		_distance_map.set_viewport();
 
 		renderer::draw_fullscreen_quad(*_occlusion_map_texture);
 	}
 
 	void Light_system::_blur_shadows_maps(float quality) {
-		if(quality < blur_min_quality)
+		if(_shadow_maps.empty())
 			return;
 
-		_blur_shader.bind();
-		_final_shadowmaps.set_viewport();
-/*
-		for(auto i=0; i<int(quality*2.f); i++) {
-			_final_shadowmaps.bind_target();
-			renderer::draw_fullscreen_quad(*_shadowmaps_texture);
+		_shadow_shader.bind();
+		_shadow_shader.set_uniform("vp", _vp);
+		_shadow_shader.set_uniform("vp_inv", glm::inverse(_vp));
+		_shadow_shader.set_uniform("vp_light", _light_vp);
 
-			_shadowmaps.bind_target();
-			renderer::draw_fullscreen_quad(*_final_shadowmaps_texture);
+		_shadow_maps.front().set_viewport();
+
+		for(auto i=0; i<shadowed_lights; i++) {
+			_shadow_maps.at(std::size_t(i)).bind_target();
+
+			_shadow_shader.set_uniform("center_lightspace", _relevant_lights.at(std::size_t(i)).flat_pos);
+			_shadow_shader.set_uniform("current_light_index", i);
+			renderer::draw_fullscreen_quad(*_distance_map_texture);
 		}
-*/
-		_final_shadowmaps.bind_target();
-		renderer::draw_fullscreen_quad(*_shadowmaps_texture);
+
+		_blur_shader.bind();
+		for(auto& shadow_map : _shadow_maps) {
+			_shadow_map_tmp.bind_target();
+			_blur_shader.set_uniform("horizontal", false);
+			renderer::draw_fullscreen_quad(shadow_map.get_attachment("color"_strid));
+
+			shadow_map.bind_target();
+			_blur_shader.set_uniform("horizontal", true);
+			renderer::draw_fullscreen_quad(_shadow_map_tmp.get_attachment("color"_strid));
+		}
 	}
 
 }

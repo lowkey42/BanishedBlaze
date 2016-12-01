@@ -26,6 +26,9 @@ frag_shader:skybox = shader/skybox.frag
 vert_shader:post = shader/post.vert
 frag_shader:post = shader/post.frag
 
+vert_shader:shadowfinal = shader/shadowfinal.vert
+frag_shader:shadowfinal = shader/shadowfinal.frag
+
 vert_shader:shadowmap = shader/shadowmap.vert
 frag_shader:shadowmap = shader/shadowmap.frag
 

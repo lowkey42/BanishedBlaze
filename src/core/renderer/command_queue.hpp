@@ -33,12 +33,15 @@ namespace renderer {
 		material  = 3, //< R:emmision, G:metallc, B:roughness
 		height    = 4,
 
-		shadowmaps=7,
+		shadowmap_0=7,
+		shadowmap_1=8,
+		shadowmap_2=9,
+		shadowmap_3=10,
 
-		decals = 8, // e.g. blood stains
+		decals = 11, // e.g. blood stains
 
-		environment = 11, //< used for reflections
-		last_frame = 12 //< used for reflections
+		environment = 12, //< used for reflections
+		last_frame = 13 //< used for reflections
 	};
 	constexpr auto texture_units = static_cast<std::size_t>(Texture_unit::last_frame)+1;
 

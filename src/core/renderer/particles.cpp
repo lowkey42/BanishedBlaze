@@ -346,7 +346,10 @@ namespace renderer {
 		              .build()
 		              .uniforms(make_uniform_map(
 		                  "texture", int(Texture_unit::color),
-		                  "shadowmaps_tex", int(Texture_unit::shadowmaps),
+		                  "shadowmap_0_tex", int(Texture_unit::shadowmap_0),
+		                  "shadowmap_1_tex", int(Texture_unit::shadowmap_1),
+		                  "shadowmap_2_tex", int(Texture_unit::shadowmap_2),
+		                  "shadowmap_3_tex", int(Texture_unit::shadowmap_3),
 		                  "environment_tex", int(Texture_unit::environment),
 		                  "last_frame_tex", int(Texture_unit::last_frame)
 		              ));

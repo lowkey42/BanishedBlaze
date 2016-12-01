@@ -22,7 +22,7 @@ varying float shadow_resistence_frag;
 varying float decals_intensity_frag;
 varying mat3 TBN;
 
-uniform sampler2D shadowmaps_tex;
+uniform sampler2D shadowmap_0_tex;
 
 uniform sampler2D decals_tex;
 uniform samplerCube environment_tex;
@@ -91,13 +91,16 @@ float my_smoothstep(float edge0, float edge1, float x) {
 	return x*x*(3.0-2.0*x);
 }
 
-float calc_shadow(int light_num) {
-	vec4 shadow = texture2D(shadowmaps_tex, shadowmap_uv_frag);
-	if(light_num>0) {
-		shadow.r = shadow.b;
-	}
+vec3 calc_shadow(int light_num) {
+	vec3 shadow = vec3(1,1,1);
 
-	return mix(shadow.r, 1.0, shadow_resistence_frag*0.9);
+	if(light_num==0)
+		shadow = texture2D(shadowmap_0_tex, shadowmap_uv_frag).rgb;
+
+	// TODO
+
+
+	return mix(shadow, vec3(1.0), shadow_resistence_frag*0.9);
 }
 
 vec3 calc_point_light(Point_light light, vec3 normal, vec3 albedo, vec3 view_dir, float roughness, float metalness, float reflectance) {

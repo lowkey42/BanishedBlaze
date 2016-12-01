@@ -28,7 +28,7 @@ uniform sampler2D normal_tex;
 uniform sampler2D material_tex;
 uniform sampler2D height_tex;
 
-uniform sampler2D shadowmaps_tex;
+uniform sampler2D shadowmap_0_tex;
 
 uniform sampler2D decals_tex;
 uniform samplerCube environment_tex;
@@ -130,7 +130,7 @@ void main() {
 
 	} else {
 		for(int i=0; i<2; i++) {
-			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) ;//* calc_shadow(i);
+			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance) * calc_shadow(i);
 		}
 		for(int i=2; i<8; i++) {
 			color += calc_point_light(light[i], normal, albedo.rgb, view_dir, roughness, metalness, reflectance);
@@ -138,6 +138,7 @@ void main() {
 	}
 
 	// in low-light scene, discard colors but keep down-scaled luminance
+	/*
 	color = mix(color, vec3(my_smoothstep(0.1, 0.2, pow(luminance(albedo.rgb), 3.3)*6000.0))*0.007, my_smoothstep(0.015, 0.005, length(color)));
 
 	color += albedo.rgb * ambient;
@@ -148,7 +149,7 @@ void main() {
 		refl *= mix(vec3(1,1,1), albedo.rgb, metalness);
 		color += refl*reflectance*0.2;
 	}
-
+*/
 	color = mix(color, albedo.rgb*3.0, emmision);
 
 	gl_FragColor = vec4(color, albedo.a);

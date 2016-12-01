@@ -26,8 +26,8 @@ vec2 get_position() {
 }
 
 vec4 raycast(vec2 position, vec2 dir) {
-	vec4 distances = vec4(1,1,1,1);
-	for (float dist=0.01; dist<1.0; dist+=1.0/(1024.0)) {
+	vec4 distances = vec4(1,1,1,1)*100.0;
+	for (float dist=0.01; dist<1.0; dist+=1.0/(256.0)) {
 		vec2 target = dist*dir*2.0 + position;
 
 		vec3 occluder = texture2D(occlusions, ndc2uv(target)).rgb;
@@ -35,11 +35,11 @@ vec4 raycast(vec2 position, vec2 dir) {
 		if(dot(occluder,occluder)>0.5*0.5) {
 			distances.a = min(distances.a, dist);
 
-			if(occluder.r>=0.5)
+			if(occluder.r>=0.1)
 				distances.r = min(distances.r, dist);
-			if(occluder.g>=0.5)
+			if(occluder.g>=0.1)
 				distances.g = min(distances.g, dist);
-			if(occluder.b>=0.5)
+			if(occluder.b>=0.1)
 				distances.b = min(distances.b, dist);
 		}
 	}
@@ -69,11 +69,11 @@ void main() {
 //	float distance_right = raycast(position - tangent, dir).a;
 
 
-	float depth = min(distances.r, min(distances.g,distances.b));
+	float depth = distances.a;
 	float dx = dFdx(depth);
 	float moment = depth*depth + 0.25*(dx*dx);
 
-	gl_FragColor = vec4(distances.rgb, moment);//pack_vec2(vec2(distance_left, distance_right)));
+	gl_FragColor = vec4(distances.rgba);//pack_vec2(vec2(distance_left, distance_right)));
 
 	/*
 	vec2 position = get_position();

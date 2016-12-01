@@ -125,7 +125,8 @@ Fall Variance shadow mapping nicht wie geplannt funktioniert, müssen die Shadow
 			Light_comp::Pool&        _lights;
 			Scene_light_cfg          _scene_settings;
 
-			renderer::Shader_program _raw_shadowmap_shader;
+			renderer::Shader_program _distance_shader;
+			renderer::Shader_program _shadow_shader;
 			renderer::Shader_program _light_volumn_shader;
 			renderer::Shader_program _blur_shader;
 			renderer::Object         _light_volumn_obj;
@@ -133,14 +134,15 @@ Fall Variance shadow mapping nicht wie geplannt funktioniert, müssen die Shadow
 			renderer::Command_queue            _occluder_queue;
 			renderer::Framebuffer              _occlusion_map; //< all occluders
 			const renderer::Texture*           _occlusion_map_texture=nullptr;
-			renderer::Framebuffer              _shadowmaps;    //< distance to nearest occluder per light per color
-			const renderer::Texture*           _shadowmaps_texture=nullptr;
-			renderer::Framebuffer              _final_shadowmaps;
-			const renderer::Texture*           _final_shadowmaps_texture=nullptr;
+			renderer::Framebuffer              _distance_map;    //< distance to nearest occluder per light per color
+			const renderer::Texture*           _distance_map_texture=nullptr;
+			std::vector<renderer::Framebuffer> _shadow_maps;
+			renderer::Framebuffer              _shadow_map_tmp;
 
 			float     _prev_quality = -1;
 			glm::vec3 _light_cam_pos;
 			glm::mat4 _light_vp;
+			glm::mat4 _vp;
 
 			std::vector<detail::Light_info> _relevant_lights;
 
