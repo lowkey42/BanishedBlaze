@@ -15,7 +15,7 @@
 #define NK_INCLUDE_DEFAULT_FONT
 #include <nuklear.h>
 
-#include "../renderer/command_queue.hpp"
+#include "../graphic/command_queue.hpp"
 
 
 struct nk_context;

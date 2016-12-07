@@ -10,7 +10,7 @@ namespace editor {
 
 	using namespace unit_literals;
 
-	Menu_bar::Action::Action(util::Str_id name, renderer::Texture_ptr icon, std::string tooltip,
+	Menu_bar::Action::Action(util::Str_id name, graphic::Texture_ptr icon, std::string tooltip,
 	                         bool toggle_state, std::function<bool()> enabled,
 	                         std::function<void()> callback, std::function<void(bool)> callback_toggle)
 	    : name(std::move(name)),
@@ -34,15 +34,15 @@ namespace editor {
 		}
 	}
 
-	Menu_bar::Menu_bar(Engine& engine, asset::Asset_manager& assets, renderer::Camera_2d& camera_ui)
+	Menu_bar::Menu_bar(Engine& engine, asset::Asset_manager& assets, graphic::Camera_2d& camera_ui)
 	    : _mailbox(engine.bus()),
 	      _assets(assets),
 	      _camera_ui(camera_ui),
 	      _input_manager(engine.input()),
-	      _bg_left  (assets.load<renderer::Texture>("tex:editor_menu_left"_aid)),
-	      _bg_center(assets.load<renderer::Texture>("tex:editor_menu_center"_aid)),
-	      _bg_right (assets.load<renderer::Texture>("tex:editor_menu_right"_aid)),
-	      _tooltip_text(engine.assets().load<renderer::Font>("font:menu_font"_aid)) {
+	      _bg_left  (assets.load<graphic::Texture>("tex:editor_menu_left"_aid)),
+	      _bg_center(assets.load<graphic::Texture>("tex:editor_menu_center"_aid)),
+	      _bg_right (assets.load<graphic::Texture>("tex:editor_menu_right"_aid)),
+	      _tooltip_text(engine.assets().load<graphic::Font>("font:menu_font"_aid)) {
 
 		_mailbox.subscribe_to([&](input::Once_action& e) {
 			util::maybe<Action&> action = util::nothing();
@@ -62,7 +62,7 @@ namespace editor {
 	                          std::function<bool()> enabled) {
 
 		_actions.emplace_back(std::move(name),
-		                      _assets.load<renderer::Texture>(icon),
+		                      _assets.load<graphic::Texture>(icon),
 		                      std::move(tooltip),
 		                      false,
 		                      std::move(enabled),
@@ -75,7 +75,7 @@ namespace editor {
 	                                 std::function<bool()> enabled) {
 
 		_actions.emplace_back(std::move(name),
-		                      _assets.load<renderer::Texture>(icon),
+		                      _assets.load<graphic::Texture>(icon),
 		                      std::move(tooltip),
 		                      def_state,
 		                      std::move(enabled),
@@ -99,7 +99,7 @@ namespace editor {
 		});
 	}
 
-	void Menu_bar::draw(renderer::Command_queue& queue) {
+	void Menu_bar::draw(graphic::Command_queue& queue) {
 		auto y_offset    = _calc_y_offset();
 		auto menu_length = _calc_menu_width();
 		auto mouse_pos   = _to_local_offset(_last_mouse_screen_pos());

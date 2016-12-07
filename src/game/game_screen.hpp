@@ -9,9 +9,9 @@
 
 #include "meta_system.hpp"
 
-#include <core/renderer/camera.hpp>
-#include <core/renderer/command_queue.hpp>
-#include <core/renderer/text.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/command_queue.hpp>
+#include <core/graphic/text.hpp>
 #include <core/engine.hpp>
 #include <core/utils/maybe.hpp>
 
@@ -39,20 +39,20 @@ namespace lux {
 			Meta_system _systems;
 			bool _add_to_highscore;
 
-			renderer::Text_dynamic _ui_text;
-			renderer::Texture_ptr _hud_background;
-			renderer::Texture_ptr _hud_timer_background;
-			renderer::Texture_ptr _hud_light_icon;
-			renderer::Texture_ptr _hud_dash_icon;
-			renderer::Texture_ptr _hud_foreground;
-			renderer::Shader_program _orb_shader;
+			graphic::Text_dynamic _ui_text;
+			graphic::Texture_ptr _hud_background;
+			graphic::Texture_ptr _hud_timer_background;
+			graphic::Texture_ptr _hud_light_icon;
+			graphic::Texture_ptr _hud_dash_icon;
+			graphic::Texture_ptr _hud_foreground;
+			graphic::Shader_program _orb_shader;
 
 			sys::gameplay::Player_tag_comp::Pool& _players;
 			int _last_selected_idx=0;
 			float _selection_movement = 0.f;
 
-			renderer::Camera_2d _camera_ui;
-			renderer::Command_queue _render_queue;
+			graphic::Camera_2d _camera_ui;
+			graphic::Command_queue _render_queue;
 
 			std::string _current_level;
 			std::string _music_aid;
@@ -64,7 +64,7 @@ namespace lux {
 
 			Time _time_acc {0};
 
-			auto _draw_orb(glm::vec2 pos, float scale, ecs::Entity_facet) -> renderer::Command;
+			auto _draw_orb(glm::vec2 pos, float scale, ecs::Entity_facet) -> graphic::Command;
 			void _draw_orbs(sys::gameplay::Player_tag_comp::Pool::iterator selected,
 			                bool left_side, int count, glm::vec2 hud_pos);
 	};

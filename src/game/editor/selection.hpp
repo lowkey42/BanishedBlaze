@@ -11,11 +11,11 @@
 
 #include <core/ecs/ecs.hpp>
 
-#include <core/renderer/camera.hpp>
-#include <core/renderer/texture.hpp>
-#include <core/renderer/shader.hpp>
-#include <core/renderer/vertex_object.hpp>
-#include <core/renderer/texture_batch.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/texture.hpp>
+#include <core/graphic/shader.hpp>
+#include <core/graphic/vertex_object.hpp>
+#include <core/graphic/texture_batch.hpp>
 
 #include <core/utils/command.hpp>
 #include <core/units.hpp>
@@ -28,12 +28,12 @@ namespace editor {
 	class Selection {
 		public:
 			Selection(Engine& engine, ecs::Entity_manager& entity_manager,
-			          renderer::Camera& world_cam, util::Command_manager&);
+			          graphic::Camera& world_cam, util::Command_manager&);
 
 			void select(ecs::Entity_facet e) {_selected_entity = std::move(e);}
 			auto selection() {return _selected_entity;}
 
-			void draw(renderer::Command_queue& queue, renderer::Camera&);
+			void draw(graphic::Command_queue& queue, graphic::Camera&);
 			void update();
 			auto handle_pointer(util::maybe<glm::vec2> mp1,
 			                    util::maybe<glm::vec2> mp2) -> bool; //< true = mouse-input has been used
@@ -50,18 +50,18 @@ namespace editor {
 			};
 
 			util::Mailbox_collection _mailbox;
-			renderer::Camera& _world_cam;
+			graphic::Camera& _world_cam;
 			util::Command_manager& _commands;
 			input::Input_manager& _input_manager;
 			ecs::Entity_manager& _ecs;
 			Editor_comp::Pool& _editor_comps;
 
-			renderer::Texture_batch _batch;
+			graphic::Texture_batch _batch;
 
-			renderer::Texture_ptr _icon_layer;
-			renderer::Texture_ptr _icon_move;
-			renderer::Texture_ptr _icon_rotate;
-			renderer::Texture_ptr _icon_scale;
+			graphic::Texture_ptr _icon_layer;
+			graphic::Texture_ptr _icon_move;
+			graphic::Texture_ptr _icon_rotate;
+			graphic::Texture_ptr _icon_scale;
 
 			ecs::Entity_facet _selected_entity;
 			bool      _curr_copy = false;

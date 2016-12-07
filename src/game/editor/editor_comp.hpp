@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <core/renderer/texture.hpp>
+#include <core/graphic/texture.hpp>
 
 #include <core/ecs/component.hpp>
 #include <core/units.hpp>

@@ -9,7 +9,7 @@
 
 #include "camera_target_comp.hpp"
 
-#include <core/renderer/camera.hpp>
+#include <core/graphic/camera.hpp>
 #include <core/engine.hpp>
 #include <core/units.hpp>
 #include <core/ecs/ecs.hpp>
@@ -50,7 +50,7 @@ namespace cam {
 
 		private:
 			Camera_target_comp::Pool& _targets;
-			renderer::Camera_sidescroller _camera;
+			graphic::Camera_sidescroller _camera;
 			bool _first_target = true;
 			Position _last_target;
 			std::array<Position, 8> _target_history;

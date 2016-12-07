@@ -11,7 +11,7 @@
 #include "../gameplay/enlightened_comp.hpp"
 #include "../gameplay/player_tag_comp.hpp"
 
-#include "../graphic/sprite_comp.hpp"
+#include "../renderer/sprite_comp.hpp"
 
 #include <core/input/events.hpp>
 #include <core/input/input_manager.hpp>
@@ -264,7 +264,7 @@ namespace controller {
 			if(controller.is_some()) {
 				auto& c = controller.get_or_throw();
 
-				auto sprite = c.owner().get<graphic::Anim_sprite_comp>();
+				auto sprite = c.owner().get<renderer::Anim_sprite_comp>();
 				auto& body = c.owner().get<physics::Dynamic_body_comp>().get_or_throw();
 				auto& ctransform = c.owner().get<physics::Transform_comp>().get_or_throw();
 				auto cpos = remove_units(ctransform.position()).xy();

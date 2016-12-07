@@ -15,13 +15,13 @@
 #include "editor/level_settings.hpp"
 #include "editor/menu_bar.hpp"
 
-#include <core/renderer/camera.hpp>
-#include <core/renderer/texture.hpp>
-#include <core/renderer/shader.hpp>
-#include <core/renderer/vertex_object.hpp>
-#include <core/renderer/primitives.hpp>
-#include <core/renderer/text.hpp>
-#include <core/renderer/command_queue.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/texture.hpp>
+#include <core/graphic/shader.hpp>
+#include <core/graphic/vertex_object.hpp>
+#include <core/graphic/primitives.hpp>
+#include <core/graphic/text.hpp>
+#include <core/graphic/command_queue.hpp>
 #include <core/utils/command.hpp>
 #include <core/engine.hpp>
 
@@ -51,14 +51,14 @@ namespace lux {
 
 			Meta_system _systems;
 
-			renderer::Camera_2d _camera_menu;
-			renderer::Camera_sidescroller _camera_world;
+			graphic::Camera_2d _camera_menu;
+			graphic::Camera_sidescroller _camera_world;
 
-			renderer::Text_dynamic _cmd_text;
-			renderer::Texture_ptr  _cmd_background;
+			graphic::Text_dynamic _cmd_text;
+			graphic::Texture_ptr  _cmd_background;
 
-			mutable renderer::Texture_batch _batch;
-			renderer::Command_queue         _render_queue;
+			mutable graphic::Texture_batch _batch;
+			graphic::Command_queue         _render_queue;
 
 			editor::Selection _selection;
 			editor::Blueprint_bar _blueprints;

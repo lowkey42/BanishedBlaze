@@ -12,19 +12,18 @@
 #include "sys/cam/camera_system.hpp"
 #include "sys/controller/controller_system.hpp"
 #include "sys/gameplay/gameplay_system.hpp"
-#include "sys/graphic/graphic_system.hpp"
-#include "sys/light/light_system.hpp"
+#include "sys/renderer/renderer_system.hpp"
 #include "sys/physics/transform_system.hpp"
 #include "sys/physics/physics_system.hpp"
 #include "sys/sound/sound_sys.hpp"
 
 #include <core/engine.hpp>
 #include <core/ecs/ecs.hpp>
-#include <core/renderer/camera.hpp>
-#include <core/renderer/command_queue.hpp>
-#include <core/renderer/skybox.hpp>
-#include <core/renderer/texture.hpp>
-#include <core/renderer/shader.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/command_queue.hpp>
+#include <core/graphic/skybox.hpp>
+#include <core/graphic/texture.hpp>
+#include <core/graphic/shader.hpp>
 
 
 namespace lux {
@@ -61,7 +60,7 @@ namespace lux {
 
 			void update(Time dt, Update_mask mask=update_all);
 			void update(Time dt, Update update=Update::none);
-			void draw(util::maybe<const renderer::Camera&> cam = util::nothing());
+			void draw(util::maybe<const graphic::Camera&> cam = util::nothing());
 
 			void light_config(Rgb sun_light, glm::vec3 sun_dir, float ambient_brightness,
 			                  Rgba background_tint, float environment_brightness);
@@ -73,19 +72,12 @@ namespace lux {
 			sys::physics::Physics_system physics;
 			sys::controller::Controller_system controller;
 			sys::cam::Camera_system camera;
-			sys::light::Light_system lights;
-			sys::graphic::Graphic_system renderer;
+			sys::renderer::Renderer_system renderer;
 			sys::gameplay::Gameplay_system gameplay;
 			sys::sound::Sound_sys sound;
 
 		private:
-			struct Post_renderer;
-
 			Engine& _engine;
-
-			renderer::Skybox _skybox;
-			std::unique_ptr<Post_renderer> _post_renderer;
-
 			std::string _current_level;
 
 	};

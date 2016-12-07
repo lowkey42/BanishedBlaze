@@ -21,7 +21,7 @@ union SDL_Event;
 namespace lux {
 	namespace asset {class Asset_manager;}
 	namespace input {class Input_manager;}
-	namespace renderer {class Graphics_ctx;}
+	namespace graphic {class Graphics_ctx;}
 	namespace audio {class Audio_ctx;}
 	namespace gui {class Translator; class Gui;}
 
@@ -81,7 +81,7 @@ namespace lux {
 			std::unique_ptr<gui::Translator> _translator;
 			Sdl_wrapper _sdl;
 			std::vector<Sdl_event_filter*> _event_filter;
-			std::unique_ptr<renderer::Graphics_ctx> _graphics_ctx;
+			std::unique_ptr<graphic::Graphics_ctx> _graphics_ctx;
 			std::unique_ptr<audio::Audio_ctx> _audio_ctx;
 			std::unique_ptr<input::Input_manager> _input_manager;
 			std::unique_ptr<gui::Gui> _gui;

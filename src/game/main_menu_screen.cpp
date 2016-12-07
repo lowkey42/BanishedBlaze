@@ -5,7 +5,7 @@
 #include "world_map_screen.hpp"
 
 
-#include <core/renderer/graphics_ctx.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <core/input/events.hpp>
 #include <core/input/input_manager.hpp>
@@ -19,7 +19,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 
 	Main_menu_screen::Main_menu_screen(Engine& engine)
@@ -36,7 +36,7 @@ namespace lux {
 			}
 		});
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("vp", _camera_ui.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("vp", _camera_ui.vp()));
 	}
 
 	void Main_menu_screen::_on_enter(util::maybe<Screen&> prev) {

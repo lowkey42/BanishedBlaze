@@ -1,4 +1,4 @@
-#version 330 core
+#version auto
 precision mediump float;
 
 in vec2 xy;

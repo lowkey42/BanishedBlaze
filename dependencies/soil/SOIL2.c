@@ -265,6 +265,8 @@ void * SOIL_GL_GetProcAddress(const char *proc)
 /* Based on the SDL2 implementation */
 int SOIL_GL_ExtensionSupported(const char *extension)
 {
+	return 1; // FIXME
+	
 	const char *extensions;
 	const char *start;
 	const char *where, *terminator;

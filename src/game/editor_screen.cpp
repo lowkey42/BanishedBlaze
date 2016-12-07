@@ -10,9 +10,9 @@
 #include "sys/physics/transform_comp.hpp"
 
 #include <core/units.hpp>
-#include <core/renderer/graphics_ctx.hpp>
-#include <core/renderer/command_queue.hpp>
-#include <core/renderer/uniform_map.hpp>
+#include <core/graphic/graphics_ctx.hpp>
+#include <core/graphic/command_queue.hpp>
+#include <core/graphic/uniform_map.hpp>
 
 #include <core/audio/music.hpp>
 #include <core/audio/audio_ctx.hpp>
@@ -31,7 +31,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 	using namespace editor;
 
 
@@ -168,7 +168,7 @@ namespace lux {
 		});
 
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("vp", _camera_menu.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("vp", _camera_menu.vp()));
 
 		_load_requested = level_id;
 	}

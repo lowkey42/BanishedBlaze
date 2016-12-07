@@ -13,10 +13,10 @@
 
 #include <core/input/input_manager.hpp>
 
-#include <core/renderer/texture.hpp>
-#include <core/renderer/text.hpp>
-#include <core/renderer/camera.hpp>
-#include <core/renderer/texture_batch.hpp>
+#include <core/graphic/texture.hpp>
+#include <core/graphic/text.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/texture_batch.hpp>
 
 #include <core/ecs/ecs.hpp>
 
@@ -25,7 +25,7 @@
 
 
 namespace lux {
-	namespace renderer {
+	namespace graphic {
 		class Command_queue;
 	}
 
@@ -40,10 +40,10 @@ namespace editor {
 			Blueprint_bar(Engine&, util::Command_manager& commands, Selection& selection,
 			              ecs::Entity_manager& entity_manager, asset::Asset_manager& assets,
 			              input::Input_manager& input_manager,
-			              renderer::Camera& camera_world, renderer::Camera_2d& camera_ui,
+			              graphic::Camera& camera_world, graphic::Camera_2d& camera_ui,
 			              glm::vec2 offset);
 
-			void draw(renderer::Command_queue& queue);
+			void draw(graphic::Command_queue& queue);
 			void update(Time dt);
 			auto handle_pointer(util::maybe<glm::vec2> mp1,
 			                    util::maybe<glm::vec2> mp2) -> bool; //< true = mouse-input has been used
@@ -55,17 +55,17 @@ namespace editor {
 			static constexpr int idx_delete = -2;
 
 			Engine&                             _engine;
-			renderer::Camera&                   _camera_world;
-			renderer::Camera_2d&                _camera_ui;
+			graphic::Camera&                   _camera_world;
+			graphic::Camera_2d&                _camera_ui;
 			glm::vec2                           _offset;
 			util::Mailbox_collection            _mailbox;
 			util::Command_manager&              _commands;
 			Selection&                          _selection;
 			ecs::Entity_manager&                _entity_manager;
 			input::Input_manager&               _input_manager;
-			renderer::Texture_ptr               _background;
-			renderer::Texture_ptr               _back_button;
-			renderer::Texture_ptr               _delete_button;
+			graphic::Texture_ptr               _background;
+			graphic::Texture_ptr               _back_button;
+			graphic::Texture_ptr               _delete_button;
 			std::shared_ptr<const Editor_conf>  _conf;
 			util::maybe<const Blueprint_group&> _current_category = util::nothing();
 
@@ -75,8 +75,8 @@ namespace editor {
 
 			glm::vec2                           _tooltip_pos;
 			Time                                _tooltip_delay_left{};
-			renderer::Text_dynamic              _tooltip_text;
-			mutable renderer::Texture_batch     _batch;
+			graphic::Text_dynamic              _tooltip_text;
+			mutable graphic::Texture_batch     _batch;
 
 			void _spawn_new(int index, glm::vec2 pos);
 			auto _get_index(glm::vec2 mouse_pos)const -> util::maybe<int>;

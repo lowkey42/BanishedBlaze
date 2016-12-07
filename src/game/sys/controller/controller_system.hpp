@@ -10,7 +10,6 @@
 #include "input_controller_comp.hpp"
 #include "ai_patrolling_comp.hpp"
 
-#include <core/renderer/camera.hpp>
 #include <core/engine.hpp>
 #include <core/units.hpp>
 #include <core/ecs/ecs.hpp>

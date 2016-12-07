@@ -15,9 +15,9 @@
 #include "finish_marker_comp.hpp"
 #include "reset_comp.hpp"
 
-#include <core/renderer/camera.hpp>
-#include <core/renderer/texture_batch.hpp>
-#include <core/renderer/sprite_animation.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/texture_batch.hpp>
+#include <core/graphic/sprite_animation.hpp>
 #include <core/engine.hpp>
 #include <core/units.hpp>
 #include <core/ecs/ecs.hpp>
@@ -82,7 +82,7 @@ namespace gameplay {
 			auto _is_reflective(glm::vec2 p, Enlightened_comp& light, ecs::Entity_facet* hit) -> Light_op_res;
 			auto _is_solid(Enlightened_comp& light, ecs::Entity_facet* hit) -> Light_op_res;
 			void _on_smashed(ecs::Entity_facet e);
-			void _on_animation_event(const renderer::Animation_event& event);
+			void _on_animation_event(const graphic::Animation_event& event);
 
 			void _on_collision(sys::physics::Collision&);
 			void _on_contact(sys::physics::Contact&);

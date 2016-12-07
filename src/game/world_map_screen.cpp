@@ -7,7 +7,7 @@
 #include <core/gui/translations.hpp>
 #include <core/gui/gui.hpp>
 
-#include <core/renderer/graphics_ctx.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <core/audio/music.hpp>
 #include <core/audio/sound.hpp>
@@ -22,7 +22,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 
 	World_map_screen::World_map_screen(Engine& engine, const std::string& level_pack_id)
@@ -71,7 +71,7 @@ namespace lux {
 			}
 		});
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("vp", _camera_ui.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("vp", _camera_ui.vp()));
 	}
 
 	void World_map_screen::_enter_nth_level(std::size_t idx) {

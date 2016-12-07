@@ -5,7 +5,7 @@
 
 #include <core/audio/sound.hpp>
 #include <core/ecs/ecs.hpp>
-#include <core/renderer/sprite_animation.hpp>
+#include <core/graphic/sprite_animation.hpp>
 #include <core/utils/str_id.hpp>
 
 #include <unordered_set>
@@ -46,7 +46,7 @@ namespace sound {
 
 		_reload();
 
-		_mailbox.subscribe_to([&](const renderer::Animation_event& event) {
+		_mailbox.subscribe_to([&](const graphic::Animation_event& event) {
 			_on_anim_event(event);
 		});
 	}
@@ -69,7 +69,7 @@ namespace sound {
 			                                           e.second.loop};
 		}
 	}
-	void Sound_sys::_on_anim_event(const renderer::Animation_event& event) {
+	void Sound_sys::_on_anim_event(const graphic::Animation_event& event) {
 		if(!event.owner)
 			return;
 

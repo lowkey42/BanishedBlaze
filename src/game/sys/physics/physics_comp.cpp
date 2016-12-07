@@ -7,8 +7,8 @@
 
 #include "polygon_separator.hpp"
 
-#include "../graphic/sprite_comp.hpp"
-#include "../graphic/terrain_comp.hpp"
+#include "../renderer/sprite_comp.hpp"
+#include "../renderer/terrain_comp.hpp"
 
 #include <core/ecs/serializer.hpp>
 #include <core/utils/sf2_glm.hpp>
@@ -97,12 +97,12 @@ namespace physics {
 
 			auto size = def.size * transform_comp.scale();
 			if(glm::length2(size)<0.01f) {
-				size = owner.get<graphic::Sprite_comp>().process(size, [&](auto& s){
+				size = owner.get<renderer::Sprite_comp>().process(size, [&](auto& s){
 					return s.size() * transform_comp.scale();
 				});
 			}
 			if(glm::length2(size)<0.01f) {
-				size = owner.get<graphic::Anim_sprite_comp>().process(size, [&](auto& s){
+				size = owner.get<renderer::Anim_sprite_comp>().process(size, [&](auto& s){
 					return s.size() * transform_comp.scale();
 				});
 			}
@@ -194,7 +194,7 @@ namespace physics {
 				return std::make_tuple(fixture_foot, size);
 			}
 
-			auto terrain_comp_mb = owner.get<graphic::Terrain_comp>();
+			auto terrain_comp_mb = owner.get<renderer::Terrain_comp>();
 			if(terrain_comp_mb.is_some()) {
 				auto& terrain_comp = terrain_comp_mb.get_or_throw();
 

@@ -5,7 +5,7 @@
 #include "loading_screen.hpp"
 #include "highscore_add_screen.hpp"
 
-#include <core/renderer/graphics_ctx.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <core/audio/music.hpp>
 #include <core/audio/sound.hpp>
@@ -23,7 +23,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 	namespace {
 		constexpr auto fadeout_delay = 2_s;
@@ -70,7 +70,7 @@ namespace lux {
 			_engine.audio_ctx().stop_music(fadeout_delay*0.75f);
 		});
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("vp", _camera_ui.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("vp", _camera_ui.vp()));
 
 		auto metadata = _systems.load_level(level_id);
 		_music_aid = metadata.music_id;
@@ -106,7 +106,7 @@ namespace lux {
 			_reset_gameplay = false;
 
 			// reset the game to be ready for continue
-			_systems.lights.config().dir_light_color = _org_sun_light.get_or_throw();
+			_systems.renderer.lights().config().dir_light_color = _org_sun_light.get_or_throw();
 			_fadeout = false;
 			_fadeout_fadetimer = 0_s;
 			_systems.gameplay.reset();
@@ -145,9 +145,9 @@ namespace lux {
 			_fadeout_fadetimer+=dt;
 
 			if(_org_sun_light.is_nothing()) {
-				_org_sun_light = _systems.lights.config().dir_light_color;
+				_org_sun_light = _systems.renderer.lights().config().dir_light_color;
 			}
-			_systems.lights.config().dir_light_color = glm::mix(_org_sun_light.get_or_throw(),
+			_systems.renderer.lights().config().dir_light_color = glm::mix(_org_sun_light.get_or_throw(),
 			                                                    fadeout_sun,
 			                                                    _fadeout_fadetimer/fadeout_delay);
 
@@ -165,7 +165,7 @@ namespace lux {
 	}
 
 
-	auto Game_screen::_draw_orb(glm::vec2 pos, float scale, ecs::Entity_facet e) -> renderer::Command {
+	auto Game_screen::_draw_orb(glm::vec2 pos, float scale, ecs::Entity_facet e) -> graphic::Command {
 		auto c = e.get<sys::gameplay::Enlightened_comp>().process(Rgb{1,1,1},
 		                                                          [&](auto& l) {
 			if(l.enabled()) {
@@ -179,8 +179,8 @@ namespace lux {
 		auto cmd = create_command()
 		        .order_dependent()
 		        .shader(_orb_shader)
-		        .object(renderer::quat_obj())
-		        .texture(renderer::Texture_unit::color, *_hud_light_icon);
+		        .object(graphic::quat_obj())
+		        .texture(graphic::Texture_unit::color, *_hud_light_icon);
 
 		cmd.uniforms().emplace("position", pos)
 		        .emplace("scale", scale*_hud_light_icon->height()*0.25f)

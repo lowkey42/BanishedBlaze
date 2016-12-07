@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <core/renderer/camera.hpp>
-#include <core/renderer/command_queue.hpp>
-#include <core/renderer/text.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/command_queue.hpp>
+#include <core/graphic/text.hpp>
 #include <core/engine.hpp>
 #include <core/utils/maybe.hpp>
 
@@ -35,8 +35,8 @@ namespace lux {
 		private:
 			util::Mailbox_collection _mailbox;
 
-			renderer::Camera_2d _camera_ui;
-			renderer::Command_queue _render_queue;
+			graphic::Camera_2d _camera_ui;
+			graphic::Command_queue _render_queue;
 
 			int _active_menu_entry = -1;
 	};

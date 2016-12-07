@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <core/renderer/camera.hpp>
 #include <core/engine.hpp>
 #include <core/units.hpp>
 #include <core/ecs/component.hpp>

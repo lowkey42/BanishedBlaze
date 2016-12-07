@@ -6,11 +6,11 @@
 #include "editor_cmds.hpp"
 
 #include "../sys/physics/transform_comp.hpp"
-#include "../sys/graphic/graphic_system.hpp"
+#include "../sys/renderer/renderer_forward.hpp"
 
 #include <core/input/input_manager.hpp>
-#include <core/renderer/primitives.hpp>
-#include <core/renderer/command_queue.hpp>
+#include <core/graphic/primitives.hpp>
+#include <core/graphic/command_queue.hpp>
 
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -20,9 +20,9 @@ namespace lux {
 namespace editor {
 
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 	using namespace lux::sys;
-	using namespace sys::graphic;
+	using namespace sys::renderer;
 	using namespace glm;
 
 	namespace {
@@ -66,7 +66,7 @@ namespace editor {
 	}
 
 	Selection::Selection(Engine& engine, ecs::Entity_manager& entity_manager,
-	                     renderer::Camera& world_cam, util::Command_manager& commands)
+	                     graphic::Camera& world_cam, util::Command_manager& commands)
 	    : _mailbox(engine.bus()), _world_cam(world_cam), _commands(commands),
 	      _input_manager(engine.input()),
 	      _ecs(entity_manager),
@@ -89,7 +89,7 @@ namespace editor {
 		});
 	}
 
-	void Selection::draw(renderer::Command_queue& queue, renderer::Camera& cam) {
+	void Selection::draw(graphic::Command_queue& queue, graphic::Camera& cam) {
 		if(_selected_entity) {
 			auto& transform = _selected_entity.get<physics::Transform_comp>().get_or_throw();
 			auto center = remove_units(transform.position());
@@ -485,14 +485,14 @@ namespace editor {
 	}
 	auto Selection::_insert_point(int prev, glm::vec2 position) -> int {
 		auto& transform = _selected_entity.get<physics::Transform_comp>().get_or_throw();
-		auto& terrain = _selected_entity.get<graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _selected_entity.get<renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		tex.insert_point(prev, position-remove_units(transform.position().xy()));
 		return prev;
 	}
 	void Selection::_move_point(glm::vec2 offset) {
-		auto& terrain = _selected_entity.get<graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _selected_entity.get<renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		_curr_point_position += offset;

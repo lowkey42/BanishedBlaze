@@ -7,11 +7,11 @@
 
 #include "../cam/camera_system.hpp"
 #include "../controller/controller_system.hpp"
-#include "../graphic/sprite_comp.hpp"
-#include "../graphic/particle_comp.hpp"
+#include "../renderer/sprite_comp.hpp"
+#include "../renderer/particle_comp.hpp"
 #include "../physics/transform_comp.hpp"
 #include "../physics/physics_system.hpp"
-#include "../light/light_comp.hpp"
+#include "../renderer/light_comp.hpp"
 
 #include <core/ecs/serializer.hpp>
 
@@ -22,7 +22,7 @@ namespace gameplay {
 
 	using namespace glm;
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 
 	namespace {
@@ -123,13 +123,13 @@ namespace gameplay {
 					player.get<Enlightened_comp>().process([&](auto& e) {
 						this->_disable_light(e, false, false);
 					});
-					player.erase_other<graphic::Anim_sprite_comp, physics::Transform_comp, Reset_comp>();
-					player.get<graphic::Anim_sprite_comp>().process([&](auto &s) {
+					player.erase_other<renderer::Anim_sprite_comp, physics::Transform_comp, Reset_comp>();
+					player.get<renderer::Anim_sprite_comp>().process([&](auto &s) {
 						s.play("exit"_strid);
 					});
 
 					marker.add_color(player_color);
-					other.get<light::Light_comp>().process([&](auto &l) {
+					other.get<renderer::Light_comp>().process([&](auto &l) {
 						l.color(to_rgb(marker._contained_colors)*6.f);
 					});
 
@@ -435,10 +435,10 @@ namespace gameplay {
 			e._smashed = true;
 		});
 
-		auto anim = e.get<graphic::Anim_sprite_comp>();
+		auto anim = e.get<renderer::Anim_sprite_comp>();
 		if(anim.is_some()) {
 			anim.get_or_throw().play("die"_strid);
-			e.erase_other<physics::Transform_comp, Enlightened_comp, graphic::Anim_sprite_comp, Player_tag_comp>();
+			e.erase_other<physics::Transform_comp, Enlightened_comp, renderer::Anim_sprite_comp, Player_tag_comp>();
 
 		} else {
 			WARN("smashed a not animated entity");
@@ -523,10 +523,10 @@ namespace gameplay {
 			auto angle = Angle{glm::atan(-c._direction.x, c._direction.y)};
 			transform.rotation(angle);
 
-			c.owner().get<light::Light_comp>().process([&](auto& l){
+			c.owner().get<renderer::Light_comp>().process([&](auto& l){
 				l.brightness_factor(2.f);
 			});
-			c.owner().get<graphic::Particle_comp>().process([&](auto& particle) {
+			c.owner().get<renderer::Particle_comp>().process([&](auto& particle) {
 				if( c._color==Light_color::white)
 					particle.add("wlight_effect"_strid);
 				else
@@ -549,7 +549,7 @@ namespace gameplay {
 		} else {
 			c._direction = {0,1};
 			// TODO: shouldn't be necessary
-			c.owner().get<graphic::Particle_comp>().process([&](auto &particle) {
+			c.owner().get<renderer::Particle_comp>().process([&](auto &particle) {
 				particle.remove("light_effect"_strid);
 				particle.remove("wlight_effect"_strid);
 			});
@@ -714,7 +714,7 @@ namespace gameplay {
 		}
 	}
 	void Gameplay_system::_disable_light(Enlightened_comp& c, bool final_impulse, bool boost) {
-		c.owner().get<graphic::Anim_sprite_comp>().process([&](auto& s) {
+		c.owner().get<renderer::Anim_sprite_comp>().process([&](auto& s) {
 			s.play("untransform"_strid);
 		});
 
@@ -739,7 +739,7 @@ namespace gameplay {
 		}
 
 		if(c._final_booster_left <= 0_s) {
-			c.owner().get<graphic::Particle_comp>().process([&](auto &particle) {
+			c.owner().get<renderer::Particle_comp>().process([&](auto &particle) {
 				particle.remove("light_effect"_strid);
 				particle.remove("wlight_effect"_strid);
 			});
@@ -748,7 +748,7 @@ namespace gameplay {
 		auto& transform = c.owner().get<physics::Transform_comp>().get_or_throw();
 		transform.rotation(0_deg);
 
-		c.owner().get<light::Light_comp>().process([&](auto& l){
+		c.owner().get<renderer::Light_comp>().process([&](auto& l){
 			l.brightness_factor(1.f);
 		});
 	}
@@ -756,12 +756,12 @@ namespace gameplay {
 
 	void Gameplay_system::_color_player(Enlightened_comp& c, Light_color new_color) {
 		if(c._color==Light_color::white && new_color!=Light_color::white) {
-			c.owner().get<graphic::Particle_comp>().process([&](auto& particle) {
+			c.owner().get<renderer::Particle_comp>().process([&](auto& particle) {
 				particle.remove("wlight_effect"_strid);
 				particle.add("light_effect"_strid);
 			});
 		} else if(c._color!=Light_color::white && new_color==Light_color::white) {
-			c.owner().get<graphic::Particle_comp>().process([&](auto& particle) {
+			c.owner().get<renderer::Particle_comp>().process([&](auto& particle) {
 				particle.add("wlight_effect"_strid);
 				particle.remove("light_effect"_strid);
 			});

@@ -6,7 +6,7 @@
 #include "gui/translations.hpp"
 #include "gui/gui.hpp"
 #include "input/input_manager.hpp"
-#include "renderer/graphics_ctx.hpp"
+#include "graphic/graphics_ctx.hpp"
 #include "utils/log.hpp"
 #include "utils/rest.hpp"
 
@@ -64,7 +64,7 @@ namespace {
 	    _asset_manager(std::make_unique<asset::Asset_manager>(argc>0 ? argv[0] : "", title)),
 	    _translator(std::make_unique<gui::Translator>(*_asset_manager)),
 	    _sdl(),
-	    _graphics_ctx(std::make_unique<renderer::Graphics_ctx>(title, *_asset_manager)),
+	    _graphics_ctx(std::make_unique<graphic::Graphics_ctx>(title, *_asset_manager)),
 	    _audio_ctx(std::make_unique<audio::Audio_ctx>(*_asset_manager)),
 	    _input_manager(std::make_unique<input::Input_manager>(_bus, *_asset_manager)),
 	    _gui(std::make_unique<gui::Gui>(*this)),

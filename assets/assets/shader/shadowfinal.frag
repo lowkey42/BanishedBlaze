@@ -1,8 +1,10 @@
-#version 330 core
+#version auto
 precision mediump float;
 
 in vec2 world_lightspace_frag;
 in vec2 center_lightspace_frag;
+
+out vec4 out_color;
 
 uniform sampler2D distance_map_tex;
 uniform sampler2D occlusions;
@@ -52,10 +54,10 @@ void main() {
 	vec2 tc = vec2(theta /(2.0*PI), (float(current_light_index)+0.5)/4.0);
 
 
-	gl_FragColor.rgb = sample_shadow_ray(tc, dist);
+	vec4 c = vec4(sample_shadow_ray(tc, dist), 1.0);
 
 	vec4 occluder = texture2D(occlusions, world_lightspace_frag);
-	gl_FragColor.rgb = min(gl_FragColor.rgb, step(occluder.rgb, vec3(0.2)));
+	c.rgb = min(c.rgb, step(occluder.rgb, vec3(0.2)));
 
-	gl_FragColor.a = 1.0;
+	out_color = c;
 }

@@ -1,7 +1,7 @@
 #include "intro_screen.hpp"
 
-#include "../core/units.hpp"
-#include "../core/renderer/graphics_ctx.hpp"
+#include <core/units.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <core/audio/music.hpp>
 #include <core/audio/audio_ctx.hpp>
@@ -15,7 +15,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 	Intro_screen::Intro_screen(Engine& game_engine)
 	    : Screen(game_engine),
@@ -32,7 +32,7 @@ namespace lux {
 			}
 		});
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("VP", _camera.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("VP", _camera.vp()));
 	}
 
 	void Intro_screen::_on_enter(util::maybe<Screen&> prev) {

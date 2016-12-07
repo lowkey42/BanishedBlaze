@@ -14,11 +14,11 @@
 #include "../asset/asset_manager.hpp"
 #include "../input/events.hpp"
 #include "../input/input_manager.hpp"
-#include "../renderer/camera.hpp"
-#include "../renderer/graphics_ctx.hpp"
-#include "../renderer/shader.hpp"
-#include "../renderer/texture.hpp"
-#include "../renderer/vertex_object.hpp"
+#include "../graphic/camera.hpp"
+#include "../graphic/graphics_ctx.hpp"
+#include "../graphic/shader.hpp"
+#include "../graphic/texture.hpp"
+#include "../graphic/vertex_object.hpp"
 
 #include <sf2/sf2.hpp>
 
@@ -28,7 +28,7 @@
 
 
 namespace lux {
-namespace renderer {
+namespace graphic {
 
 	// extend vertex for nk_vec2
 	template<class Base>
@@ -41,7 +41,7 @@ namespace renderer {
 
 namespace gui {
 
-	using namespace renderer;
+	using namespace graphic;
 
 	namespace {
 		struct Font_desc {
@@ -281,7 +281,7 @@ namespace gui {
 
 				data = static_cast<const uint8_t*>(nk_font_atlas_bake(&atlas, &width, &height, NK_FONT_ATLAS_RGBA32));
 			}
-			void post_init(nk_context& ctx, nk_draw_null_texture& null_tex, const renderer::Texture& tex) {
+			void post_init(nk_context& ctx, nk_draw_null_texture& null_tex, const graphic::Texture& tex) {
 				data = nullptr;
 				width = 0;
 				height = 0;

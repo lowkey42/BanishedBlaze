@@ -14,7 +14,7 @@
 namespace lux {
 namespace editor {
 
-	using namespace renderer;
+	using namespace graphic;
 	using namespace glm;
 	using namespace unit_literals;
 
@@ -32,13 +32,13 @@ namespace editor {
 		std::string id;
 		std::string tooltip;
 		std::string icon;
-		renderer::Texture_ptr icon_texture;
+		graphic::Texture_ptr icon_texture;
 	};
 	struct Blueprint_group {
 		std::string name;
 		std::string tooltip;
 		std::string icon;
-		renderer::Texture_ptr icon_texture;
+		graphic::Texture_ptr icon_texture;
 		std::vector<Blueprint_desc> blueprints;
 	};
 
@@ -63,9 +63,9 @@ namespace asset {
 			}, *r);
 
 			for(auto& group : r->blueprint_groups) {
-				group.icon_texture = in.manager().load<renderer::Texture>(asset::AID{group.icon});
+				group.icon_texture = in.manager().load<graphic::Texture>(asset::AID{group.icon});
 				for(auto& blueprint : group.blueprints) {
-					blueprint.icon_texture = in.manager().load<renderer::Texture>(asset::AID{blueprint.icon});
+					blueprint.icon_texture = in.manager().load<graphic::Texture>(asset::AID{blueprint.icon});
 				}
 			}
 
@@ -86,17 +86,17 @@ namespace editor {
 	Blueprint_bar::Blueprint_bar(Engine& e, util::Command_manager& commands, Selection& selection,
 	                             ecs::Entity_manager& entity_manager, asset::Asset_manager& assets,
 	                             input::Input_manager& input_manager,
-	                             renderer::Camera& camera_world, renderer::Camera_2d& camera_ui,
+	                             graphic::Camera& camera_world, graphic::Camera_2d& camera_ui,
 				                 glm::vec2 offset)
 	    : _engine(e),
 	      _camera_world(camera_world), _camera_ui(camera_ui), _offset(offset),
 	      _mailbox(e.bus()), _commands(commands), _selection(selection),
 	      _entity_manager(entity_manager), _input_manager(input_manager),
-	      _background(e.assets().load<renderer::Texture>("tex:editor_bar_blueprints"_aid)),
-	      _back_button(e.assets().load<renderer::Texture>("tex:editor_bar_blueprints_back"_aid)),
-	      _delete_button(e.assets().load<renderer::Texture>("tex:editor_bar_blueprints_delete"_aid)),
+	      _background(e.assets().load<graphic::Texture>("tex:editor_bar_blueprints"_aid)),
+	      _back_button(e.assets().load<graphic::Texture>("tex:editor_bar_blueprints_back"_aid)),
+	      _delete_button(e.assets().load<graphic::Texture>("tex:editor_bar_blueprints_delete"_aid)),
 	      _conf(assets.load<Editor_conf>("cfg:editor"_aid)),
-	      _tooltip_text(e.assets().load<renderer::Font>("font:menu_font"_aid)) {
+	      _tooltip_text(e.assets().load<graphic::Font>("font:menu_font"_aid)) {
 
 		entity_manager.register_component_type<Editor_comp>();
 
@@ -160,7 +160,7 @@ namespace editor {
 		}
 	}
 
-	void Blueprint_bar::draw(renderer::Command_queue& queue) {
+	void Blueprint_bar::draw(graphic::Command_queue& queue) {
 		auto offset = _offset - glm::vec2{_background->width()/2.f, 0.f};
 		auto size = glm::vec2{_background->width(), _background->height()};
 		_batch.insert(*_background, offset, size);

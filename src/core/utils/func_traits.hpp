@@ -14,10 +14,11 @@
 
 namespace lux {
 namespace util {
-
+	
 	enum class func_type {
 		free, member, functor
 	};
+
 
 	template<typename F>
 	struct func_trait : func_trait<decltype(&F::operator())> {
@@ -52,7 +53,7 @@ namespace util {
 	};
 
 	template<typename T, std::size_t i>
-	using nth_func_arg_t = typename func_trait<T>::template arg_t<i>;
+	using nth_func_arg_t = typename func_trait<std::decay_t<T>>::template arg_t<i>;
 
 
 	template<typename F>
@@ -72,6 +73,5 @@ namespace util {
 		func(std::forward<FirstArg>(first), std::forward<SecondArg>(second));
 		apply2(std::forward<F>(func), std::forward<Arg>(arg)...);
 	}
-
 }
 }

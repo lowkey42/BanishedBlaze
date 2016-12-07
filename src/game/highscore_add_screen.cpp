@@ -4,7 +4,7 @@
 #include "level.hpp"
 
 #include <core/units.hpp>
-#include <core/renderer/graphics_ctx.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <core/audio/music.hpp>
 #include <core/audio/audio_ctx.hpp>
@@ -24,7 +24,7 @@
 
 namespace lux {
 	using namespace unit_literals;
-	using namespace renderer;
+	using namespace graphic;
 
 	Highscore_add_screen::Highscore_add_screen(Engine& engine, std::string level, Time time)
 	    : Screen(engine),
@@ -59,7 +59,7 @@ namespace lux {
 			}
 		});
 
-		_render_queue.shared_uniforms(renderer::make_uniform_map("VP", _camera.vp()));
+		_render_queue.shared_uniforms(graphic::make_uniform_map("VP", _camera.vp()));
 	}
 
 	void Highscore_add_screen::_on_enter(util::maybe<Screen&> prev) {

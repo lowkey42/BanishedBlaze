@@ -17,7 +17,7 @@
 
 
 namespace lux {
-namespace renderer {
+namespace graphic {
 	struct Animation_event;
 }
 namespace sys {
@@ -50,7 +50,7 @@ namespace sound {
 
 
 			void _reload();
-			void _on_anim_event(const renderer::Animation_event& event);
+			void _on_anim_event(const graphic::Animation_event& event);
 
 	};
 

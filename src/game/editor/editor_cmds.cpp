@@ -1,7 +1,7 @@
 #include "editor_cmds.hpp"
 
 #include "../sys/physics/transform_comp.hpp"
-#include "../sys/graphic/graphic_system.hpp"
+#include "../sys/renderer/renderer_forward.hpp"
 
 #include <glm/gtx/string_cast.hpp>
 
@@ -27,8 +27,8 @@ namespace editor {
 		_selection.select({});
 	}
 	void Delete_cmd::undo() {
-		INVARIANT(_entity, "No stored entity in Delete_cmd");
-		_entity.manager().read_one(_saved_state, _entity.handle());
+		INVARIANT(!_saved_state.empty(), "No stored entity in Delete_cmd");
+		_entity = _entity.manager().read_one(_saved_state);
 		_selection.select(_entity);
 	}
 
@@ -165,13 +165,13 @@ namespace editor {
 			return;
 		}
 
-		auto& terrain = _entity.get<sys::graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _entity.get<sys::renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		tex.erase_point(static_cast<std::size_t>(_index));
 	}
 	void Point_deleted_cmd::undo() {
-		auto& terrain = _entity.get<sys::graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _entity.get<sys::renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		tex.insert_point(static_cast<std::size_t>(_index), _prev_pos);
@@ -191,7 +191,7 @@ namespace editor {
 			return;
 		}
 
-		auto& terrain = _entity.get<sys::graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _entity.get<sys::renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		if(_new_point) {
@@ -202,7 +202,7 @@ namespace editor {
 		}
 	}
 	void Point_moved_cmd::undo() {
-		auto& terrain = _entity.get<sys::graphic::Terrain_comp>().get_or_throw();
+		auto& terrain = _entity.get<sys::renderer::Terrain_comp>().get_or_throw();
 		auto& tex = terrain.smart_texture();
 
 		if(_new_point) {

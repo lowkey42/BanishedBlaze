@@ -11,13 +11,13 @@
 #include "highscore_manager.hpp"
 
 #include <core/gui/gui.hpp>
-#include <core/renderer/camera.hpp>
-#include <core/renderer/texture.hpp>
-#include <core/renderer/shader.hpp>
-#include <core/renderer/vertex_object.hpp>
-#include <core/renderer/primitives.hpp>
-#include <core/renderer/text.hpp>
-#include <core/renderer/command_queue.hpp>
+#include <core/graphic/camera.hpp>
+#include <core/graphic/texture.hpp>
+#include <core/graphic/shader.hpp>
+#include <core/graphic/vertex_object.hpp>
+#include <core/graphic/primitives.hpp>
+#include <core/graphic/text.hpp>
+#include <core/graphic/command_queue.hpp>
 
 
 namespace lux {
@@ -42,11 +42,11 @@ namespace lux {
 			util::Mailbox_collection _mailbox;
 			Highscore_manager& _highscores;
 
-			renderer::Camera_2d _camera;
+			graphic::Camera_2d _camera;
 
-			renderer::Text_dynamic _debug_Text;
+			graphic::Text_dynamic _debug_Text;
 
-			renderer::Command_queue _render_queue;
+			graphic::Command_queue _render_queue;
 
 			Highscore_list_ptr _highscore_list;
 

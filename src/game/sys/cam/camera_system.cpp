@@ -5,7 +5,7 @@
 #include "../physics/transform_comp.hpp"
 #include "../physics/physics_comp.hpp"
 
-#include <core/renderer/graphics_ctx.hpp>
+#include <core/graphic/graphics_ctx.hpp>
 
 #include <glm/gtx/random.hpp>
 
