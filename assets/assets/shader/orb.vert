@@ -1,16 +1,17 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec2 position;
-attribute vec2 uv;
+in vec2 position;
+in vec2 uv;
 
-varying vec2 uv_frag;
-varying vec2 uv_mask_frag;
+out vec2 uv_frag;
+out vec2 uv_mask_frag;
 
 uniform mat4 vp;
 uniform vec2 pos;
 uniform float scale;
 uniform float time;
+
 
 vec2 rotate(vec2 p, float a) {
 	vec2 r = mat2(cos(a), -sin(a), sin(a), cos(a)) * p;

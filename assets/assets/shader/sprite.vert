@@ -1,48 +1,51 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec3 position;
-attribute vec2 decals_offset;
-attribute vec2 uv;
-attribute vec4 uv_clip;
-attribute vec2 tangent;
-attribute vec2 hue_change;
-attribute float shadow_resistence;
-attribute float decals_intensity;
+in vec3 position;
+in vec2 decals_offset;
+in vec2 uv;
+in vec4 uv_clip;
+in vec2 tangent;
+in vec2 hue_change;
+in float shadow_resistence;
+in float decals_intensity;
 
-varying vec2 uv_frag;
-varying vec4 uv_clip_frag;
-varying vec2 decals_uv_frag;
-varying vec3 pos_frag;
-varying vec2 hue_change_frag;
-varying vec2 shadowmap_uv_frag;
-varying float shadow_resistence_frag;
-varying float decals_intensity_frag;
+out Vertex_out {
+	vec2 uv;
+	vec4 uv_clip;
+	vec2 decals_uv;
+	vec3 pos;
+	vec2 hue_change;
+	vec2 shadowmap_uv;
+	float shadow_resistence;
+	float decals_intensity;
+	
+	mat3 TBN;
+} output;
 
-varying mat3 TBN;
+#include <_uniforms_globals.glsl>
 
-uniform mat4 vp;
-uniform mat4 vp_light;
 
 void main() {
 	vec4 pos_vp = vp * vec4(position, 1);
 	vec4 pos_lvp = vp * vec4(position.x, position.y, 0.0, 1);
 	gl_Position = pos_vp;
 
-	vec4 pos_vp0 = vp_light * vec4(position.xy + decals_offset.xy, position.z/4.0, 1);
-	decals_uv_frag = pos_vp0.xy/pos_vp0.w/2.0+0.5;
+	vec4 pos_vp0 = sse_vp * vec4(position.xy + decals_offset.xy, position.z/4.0, 1);
+	output.decals_uv = pos_vp0.xy/pos_vp0.w/2.0+0.5;
 
-	shadowmap_uv_frag = pos_vp.xy/pos_vp.w/2.0+0.5;
-	uv_frag = uv;
-	uv_clip_frag = uv_clip;
-	pos_frag = position;
-	hue_change_frag = hue_change;
-	shadow_resistence_frag = shadow_resistence;
-	decals_intensity_frag = decals_intensity;
+	output.shadowmap_uv = pos_vp.xy/pos_vp.w/2.0+0.5;
+	output.uv = uv;
+	output.uv_clip = uv_clip;
+	output.pos = position;
+	output.hue_change = hue_change;
+	output.shadow_resistence = shadow_resistence;
+	output.decals_intensity = decals_intensity;
 
+	// TODO: transform tangent and normal too!
 	vec3 T = normalize(vec3(tangent,0.0));
 	vec3 N = vec3(0.0,0.0,1.0);
 	vec3 B = cross(N, T);
-	TBN = mat3(T, B, N);
+	output.TBN = mat3(T, B, N);
 }
 

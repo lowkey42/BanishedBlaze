@@ -1,11 +1,11 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec3 position;
-varying vec3 position_frag;
+in vec3 position;
+out vec3 position_frag;
 
-uniform mat4 vp;
-uniform vec3 eye;
+#include <_uniforms_globals.glsl>
+
 
 void main() {
 	float a = eye.x * 0.001;
@@ -13,7 +13,7 @@ void main() {
 	                     position.y,
 	                     -position.x*sin(a)+position.z*cos(a));
 
-	vec4 pos = vp * vec4(p*10000.0 + eye, 1.0);
+	vec4 pos = vp * vec4(p*10000.0 + eye.xyz, 1.0);
 	gl_Position = pos.xyww;
 
 	position_frag = position;

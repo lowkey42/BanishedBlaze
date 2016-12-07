@@ -1,132 +1,117 @@
 
-#skip begin
-struct Dir_light {
-	vec3 color;
-	vec3 dir;
-};
-struct Point_light {
-	vec3 pos;
-	float dir;
-	float angle;
-	vec3 color;
-	vec3 factors;
-};
-
-varying vec2 uv_frag;
-varying vec4 uv_clip_frag;
-varying vec2 decals_uv_frag;
-varying vec3 pos_frag;
-varying vec2 shadowmap_uv_frag;
-varying vec2 hue_change_frag;
-varying float shadow_resistence_frag;
-varying float decals_intensity_frag;
-varying mat3 TBN;
+#include <_uniforms_lighting.glsl>
 
 uniform sampler2D shadowmap_0_tex;
 uniform sampler2D shadowmap_1_tex;
 uniform sampler2D shadowmap_2_tex;
 uniform sampler2D shadowmap_3_tex;
 
-uniform sampler2D decals_tex;
-uniform samplerCube environment_tex;
-uniform sampler2D last_frame_tex;
 
-uniform vec3 eye;
-uniform float alpha_cutoff;
-uniform bool fast_lighting;
-#skip end
+vec3 calc_dir_light(vec3 diff_color, vec3 F0, vec3 N, vec3 V, float roughness);
+vec3 calc_env_light(vec3 diff_color, vec3 F0, vec3 N, vec3 V, float roughness);
+vec3 calc_point_light(vec3 position, vec3 diff_color, vec3 F0, vec3 N, vec3 V,
+                      float roughness, int idx);
 
+vec3 calc_light(vec3 position, vec3 diff_color, vec3 F0, vec3 N, vec3 V, float roughness) {
+	vec3 color = calc_env_light(diff_color, F0, N, V, roughness);
+	color += calc_dir_light(diff_color, F0, N, V, roughness);
 
-float G1V ( float dotNV, float k ) {
-	return 1.0 / (dotNV*(1.0 - k) + k);
-}
-vec3 calc_light(vec3 light_dir, vec3 light_color, vec3 normal, vec3 albedo, vec3 view_dir, float roughness, float metalness, float reflectance) {
+	color += calc_point_light(position, diff_color, F0, N, V, roughness, 0)
+	        * texture(shadowmap_0_tex, input.shadowmap_uv).rgb;
 
-	// TODO: cleanup this mess and replace experiments with real formulas
-	vec3 N = normal;
-	vec3 V = -view_dir;
+	color += calc_point_light(position, diff_color, F0, N, V, roughness, 1)
+	        * texture(shadowmap_1_tex, input.shadowmap_uv).rgb;
 
-	float alpha = roughness*roughness;
-	vec3 L = normalize(light_dir);
-	vec3 H = normalize (V + L);
+	color += calc_point_light(position, diff_color, F0, N, V, roughness, 2)
+	        * texture(shadowmap_2_tex, input.shadowmap_uv).rgb;
 
-	float dotNL = clamp (dot (N, L), 0.0, 1.0);
-	float dotNV = clamp (dot (N, V), 0.0, 1.0);
-	float dotNH = clamp (dot (N, H), 0.0, 1.0);
-	float dotLH = clamp (dot (L, H), 0.0, 1.0);
+	color += calc_point_light(position, diff_color, F0, N, V, roughness, 3)
+	        * texture(shadowmap_3_tex, input.shadowmap_uv).rgb;
 
-	float D, vis;
-	vec3 F;
-
-	// NDF : GGX
-	float alphaSqr = alpha*alpha;
-	float pi = 3.1415926535;
-	float denom = dotNH * dotNH *(alphaSqr - 1.0) + 1.0;
-	D = alphaSqr / (pi * denom * denom);
-
-	float spec_mod_factor = 2.0 + metalness*40.0; //< not physicaly accurate, but makes metals more shiny
-	D*=mix(spec_mod_factor, 0.0, roughness); // TODO(this is a workaround): specular is to powerfull for realy rough surfaces
-	D = clamp(D, 0.0, 50.0);
-
-	// Fresnel (Schlick)
-	vec3 F0 = mix(vec3(0.16*reflectance*reflectance), albedo.rgb, 0.0);
-	float dotLH5 = pow (1.0 - dotLH, 5.0);
-	F = F0 + (1.0 - F0)*(dotLH5);
-
-	// Visibility term (G) : Smith with Schlick's approximation
-	float k = alpha / 2.0;
-	vis = G1V (dotNL, k) * G1V (dotNV, k);
-
-	vec3 specular = D * F * vis;
-
-	float invPi = 0.31830988618;
-	vec3 diffuse = (albedo * invPi);
-
-	diffuse*=(1.0 - metalness);
-
-	light_color = mix(light_color, light_color*albedo, metalness);
-
-	return (diffuse + specular) * light_color * dotNL;
+	return color;
 }
 
-float my_smoothstep(float edge0, float edge1, float x) {
-	x = clamp((x-edge0)/(edge1-edge0), 0.0, 1.0);
-	return x*x*(3.0-2.0*x);
+
+vec3 calc_generic_light(vec3 light_color, vec3 diff_color, vec3 F0,
+                        float roughness, vec3 N, vec3 V, vec3 L);
+vec4 spec_cook_torrence(vec3 F0, float roughness,
+                        vec3 N, vec3 V, vec3 L, float NdotL);
+
+vec3 calc_dir_light(vec3 diff_color, vec3 F0, vec3 N, vec3 V, float roughness) {
+	return calc_generic_light(directional_light.rgb,
+	                          diff_color, F0, roughness,
+	                          N, V, directional_dir.xyz);
 }
 
-vec3 calc_shadow(int light_num) {
-	vec3 shadow = vec3(1,1,1);
-
-	if(light_num==0)
-		shadow = texture2D(shadowmap_0_tex, shadowmap_uv_frag).rgb;
-	else if(light_num==1)
-		shadow = texture2D(shadowmap_1_tex, shadowmap_uv_frag).rgb;
-	else if(light_num==2)
-		shadow = texture2D(shadowmap_2_tex, shadowmap_uv_frag).rgb;
-	else if(light_num==3)
-		shadow = texture2D(shadowmap_3_tex, shadowmap_uv_frag).rgb;
-
-	return shadow; // TODO
-	return mix(shadow, vec3(1.0), shadow_resistence_frag*0.9);
+vec3 calc_env_light(vec3 diff_color, vec3 F0, vec3 N, vec3 V, float roughness) {
+	// TODO
+	return diff_color * ambient_light.rgb;
 }
 
-vec3 calc_point_light(Point_light light, vec3 normal, vec3 albedo, vec3 view_dir, float roughness, float metalness, float reflectance) {
-	vec3 light_dir = light.pos.xyz - pos_frag;
-	float light_dist = length(light_dir);
-	light_dir /= light_dist;
+vec3 calc_point_light(vec3 position, vec3 diff_color, vec3 F0, vec3 N, vec3 V,
+                      float roughness, int idx) {
+	vec3 L = light[idx].pos.xyz - position;
+	float light_dist = length(L);
+	L /= light_dist;
 
-	float attenuation = clamp(1.0 / (light.factors.x + light_dist*light.factors.y + light_dist*light_dist*light.factors.z)-0.01, 0.0, 1.0);
+	light_dist = max(0.0, light_dist-light[idx].src_radius);
 
-	if(!fast_lighting) {
-		const float PI = 3.141;
-		float theta = atan(light_dir.y, -light_dir.x)-light.dir;
-		theta = ((theta/(2.0*PI)) - floor(theta/(2.0*PI))) * 2.0*PI - PI;
 
-		attenuation *= my_smoothstep(-0.2, 0.6, clamp(light.angle-abs(theta), -1.0, 1.0));
-	}
+	float attenuation = clamp(1.0 / max(1.0, light_dist*light_dist), 0.0, 1.0);
 
-	return calc_light(light_dir, light.color, normal, albedo, view_dir, roughness, metalness, reflectance) * attenuation;
+	return calc_generic_light(light[idx].color.rgb,
+	                          diff_color, F0, roughness,
+	                          N, V, L) * attenuation;
 }
-vec3 calc_dir_light(Dir_light light, vec3 normal, vec3 albedo, vec3 view_dir, float roughness, float metalness, float reflectance) {
-	return calc_light(light.dir, light.color, normal, albedo, view_dir, roughness, metalness, reflectance);
+
+
+vec3 calc_generic_light(vec3 light_color, vec3 diff_color, vec3 F0,
+                        float roughness, vec3 N, vec3 V, vec3 L) {
+
+	float NdotL = max(0.0, dot(N, L));
+	vec4 spec_ct = spec_cook_torrence(F0, roughness, N,V,L,NdotL);
+
+	vec3 ks = spec_ct.rgb;
+	vec3 kd = vec3(1.0) - ks;
+	vec3 spec = light_color * spec_ct.a * ks * step(0.01, NdotL);
+	vec3 diff = light_color * NdotL * diff_color * kd;
+
+	return (spec + diff);
+}
+
+// TODO: fix black "highlight" if light and camera are close to the surface
+vec4 spec_cook_torrence(vec3 F0, float roughness,
+                        vec3 N, vec3 L, vec3 V, float NdotL) {
+
+	const float PI = 3.14159265359;
+
+	vec3 H = normalize(L + V);
+
+	float HdotV = max(0.0, dot(H, V));
+	float HdotL = max(0.0, dot(H, L));
+
+	float NdotV = max(0.0, dot(N, V));
+	float NdotH = max(0.0, dot(N, H));
+
+	float NdotH_2 = NdotH * NdotH;
+	float NdotH_4 = NdotH_2 * NdotH_2;
+
+	// fresnel term, schlick's  appox.
+	vec3 F = F0 + (1.0-F0) * pow(1.0 - HdotL, 5);
+
+	// distribution function, GGX
+	float alpha = roughness * roughness;
+	float alpha_2 = alpha * alpha;
+	float denom = NdotH*NdotH *  (alpha_2 - 1.0) + 1.0;
+	float D = alpha_2 / (PI * denom * denom);
+
+	// geometry factor, GGX
+	float chi = (HdotV / NdotV) > 0.0 ? 1.0 : 0.0;
+	float HdotV_2 = HdotV * HdotV;
+	float tan2 = ( 1 - HdotV_2 ) / HdotV_2;
+	float G = (chi * 2) / (1 + sqrt(1 + roughness*roughness * tan2));
+
+	float spec = max(0.0, (D*G) / (4*NdotL*NdotV + 0.05));
+
+	return vec4(F, spec);
 }

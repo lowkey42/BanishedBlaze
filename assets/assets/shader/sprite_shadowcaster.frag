@@ -1,10 +1,15 @@
-#version 100
+#version auto
 precision mediump float;
 
-varying vec2 uv_frag;
-varying vec4 uv_clip_frag;
-varying vec3 pos_frag;
-varying vec2 hue_change_frag;
+
+in Vertex_out {
+	vec2 uv;
+	vec4 uv_clip;
+	vec3 pos;
+	vec2 hue_change;
+} input;
+
+out vec4 out_color;
 
 uniform sampler2D albedo_tex;
 uniform sampler2D height_tex;
@@ -27,27 +32,27 @@ vec3 hsv2rgb(vec3 c) {
 
 vec3 hue_shift(vec3 in_color) {
 	vec3 hsv = rgb2hsv(in_color);
-	hsv.x = abs(hsv.x-hue_change_frag.x)<0.1 ? hue_change_frag.y+(hsv.x-hue_change_frag.x) : hsv.x;
+	hsv.x = abs(hsv.x-input.hue_change.x)<0.1 ? input.hue_change.y+(hsv.x-input.hue_change.x) : hsv.x;
 	return hsv2rgb(hsv);
 }
 
 void main() {
-	vec2 uv = mod(uv_frag, 1.0) * (uv_clip_frag.zw-uv_clip_frag.xy) + uv_clip_frag.xy;
+	vec2 uv = mod(input.uv, 1.0) * (input.uv_clip.zw-input.uv_clip.xy) + input.uv_clip.xy;
 
-	vec4 albedo = texture2D(albedo_tex, uv);
+	vec4 albedo = texture(albedo_tex, uv);
 	vec3 color = hue_shift(albedo.rgb);
 	float alpha = albedo.a;
-	float height = texture2D(height_tex, uv).r;
+	float height = texture(height_tex, uv).r;
 
 	if(alpha < 0.01 || height < 0.7) {
 		discard;
 	}
 
 	if(alpha<0.99) {
-		gl_FragColor = vec4((vec3(1.0) - step(0.3, color)), 0.0);
+		out_color = vec4((vec3(1.0) - step(0.3, color)), 0.0);
 
 	} else {
-		gl_FragColor = vec4(1.0, 1.0, 1.0, 0.0);
+		out_color = vec4(1.0, 1.0, 1.0, 0.0);
 	}
 }
 

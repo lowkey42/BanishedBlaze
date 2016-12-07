@@ -1,18 +1,18 @@
-#version 100
+#version auto
 precision lowp float;
 
-attribute vec2 xy;
-attribute vec2 uv;
+in vec2 xy;
+in vec2 uv;
 
-varying vec2 uv_center;
-varying vec2 uv_1;
-varying vec2 uv_2;
-varying vec2 uv_3;
+out vec2 uv_center;
+out vec2 uv_1;
+out vec2 uv_2;
+out vec2 uv_3;
 
 uniform bool horizontal;
-uniform sampler2D texture;
 uniform vec2 texture_size;
 uniform vec2 dir;
+
 
 void main() {
 	gl_Position = vec4(xy.x*2.0, xy.y*2.0, 0.0, 1.0);

@@ -1,25 +1,27 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec3 position;
-attribute vec3 direction;
-attribute float rotation;
-attribute float frames;
-attribute float current_frame;
-attribute float size;
-attribute float alpha;
-attribute float opacity;
-attribute float hue_change_out;
+in vec3 position;
+in vec3 direction;
+in float rotation;
+in float frames;
+in float current_frame;
+in float size;
+in float alpha;
+in float opacity;
+in float hue_change_out;
 
-varying float frames_frag;
-varying float current_frame_frag;
-varying float rotation_frag;
-varying float alpha_frag;
-varying float opacity_frag;
-varying float hue_change_out_frag;
+out Vertex_out {
+	float frames;
+	float current_frame;
+	float rotation;
+	float alpha;
+	float opacity;
+	float hue_change_out;
+} output;
 
-uniform mat4 view;
-uniform mat4 vp;
+#include <_uniforms_globals.glsl>
+
 
 void main() {
 	vec2 dir_view = (view * vec4(direction, 0.0)).xy;
@@ -40,10 +42,10 @@ void main() {
 	gl_Position = clip_space_pos;
 	gl_PointSize = (1.0-clip_space_pos.z) * size * 200.0;
 
-	frames_frag = frames;
-	current_frame_frag = floor(current_frame);
-	rotation_frag = rotation+rot_dyn;
-	alpha_frag = alpha;
-	opacity_frag = opacity;
-	hue_change_out_frag = hue_change_out;
+	output.frames = frames;
+	output.current_frame = floor(current_frame);
+	output.rotation = rotation+rot_dyn;
+	output.alpha = alpha;
+	output.opacity = opacity;
+	output.hue_change_out = hue_change_out;
 }

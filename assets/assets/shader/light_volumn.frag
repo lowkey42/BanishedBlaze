@@ -1,18 +1,21 @@
-#version 100
+#version auto
 precision mediump float;
 
-varying vec2 shadowmap_uv_frag;
-varying vec2 shadowmap_luv_frag;
-varying vec2 world_uv_frag;
-varying vec3 world_pos_frag;
-varying vec3 light_pos_frag;
-varying vec3 factors_frag;
-varying vec3 color_frag;
-varying float radius_frag;
+in Vertex_out {
+	vec2 world_uv;
+	vec2 shadowmap_uv;
+	vec2 shadowmap_luv;
+	vec3 world_pos;
+} input;
+
+out vec4 out_color;
+
+
+#include <_uniforms_lighting.glsl>
+#include <_uniforms_globals.glsl>
 
 uniform sampler2D shadowmap_tex;
 uniform sampler2D depth_tex;
-uniform mat4 vp_inv;
 uniform mediump int current_light_index;
 
 
@@ -22,7 +25,7 @@ vec3 pixel_position(vec2 uv, float depth) {
 }
 
 float visibility(vec3 env_world_pos, float depth_offset) {
-	return world_pos_frag.z + depth_offset >= env_world_pos.z ? 1.0 : 0.0;
+	return input.world_pos.z + depth_offset >= env_world_pos.z ? 1.0 : 0.0;
 }
 
 void main() {
@@ -33,22 +36,24 @@ void main() {
 	float albedo = 0.25; // probability of scattering (not absorbing) after collision
 	float phi = 10000.0;
 
-	vec2 uv = world_uv_frag;
+	float radius = light[current_light_index].area_of_effect;
+
+	vec2 uv = input.world_uv;
 	float depth = texture2D(depth_tex, uv).r;
 	vec3 env_world_pos = pixel_position(uv, depth);
 
-	vec3 light_dir = light_pos_frag - world_pos_frag;
+	vec3 light_dir = light[current_light_index].pos.xyz - input.world_pos;
 	float light_dist = length(light_dir);
 	float light_dist2 = light_dist*light_dist;
 	light_dir /= light_dist;
 
 
 	// calculate a: length of the ray that is in the light range (radius of the spherical cap)
-	float h  = 1.0 - clamp(light_dist / radius_frag, 0.0, 1.0);
+	float h  = 1.0 - clamp(light_dist / radius, 0.0, 1.0);
 	float a  = sqrt(max(0.0, 2.0*h - h*h));
 
 
-	float s = a*2.0*radius_frag;
+	float s = a*2.0*radius;
 	if(s<=0.0) {
 		discard;
 	}
@@ -58,7 +63,7 @@ void main() {
 		float l = s*i;
 		float dl = s * 0.1;
 		
-		float r = s - a*radius_frag;
+		float r = s - a*radius;
 		float d2 = light_dist2 + r*r; // distance to lightsource
 		float d = sqrt(d2);
 
@@ -69,7 +74,7 @@ void main() {
 		L+= L_i * exp(-l * tau) * dl;
 	}
 
-	vec3 shadow = texture2D(shadowmap_tex, shadowmap_uv_frag).rgb;
+	vec3 shadow = texture(shadowmap_tex, input.shadowmap_uv).rgb;
 	
-	gl_FragColor = vec4(color_frag * L * shadow, 0.0);
+	out_color = vec4(light[current_light_index].color.rgb * L * shadow, 0.0);
 }

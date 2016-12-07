@@ -4,13 +4,15 @@ precision mediump float;
 in vec2 xy;
 in vec2 uv;
 
-out vec2 world_lightspace_frag;
-out vec2 center_lightspace_frag;
+out Vertex_out {
+	vec2 world_lightspace;
+	vec2 center_lightspace;
+} output;
 
-uniform mat4 vp;
-uniform mat4 vp_inv;
-uniform mat4 vp_light;
+#include <_uniforms_globals.glsl>
+
 uniform vec2 center_lightspace;
+
 
 void main() {
 	gl_Position = vec4(xy.x*2.0, xy.y*2.0, 0.0, 1.0);
@@ -21,7 +23,7 @@ void main() {
 	world_pos/=world_pos.w;
 	world_pos.z=0.0;
 
-	vec4 light_pos = vp_light * world_pos;
-	world_lightspace_frag = light_pos.xy / light_pos.w *0.5+0.5;
-	center_lightspace_frag = center_lightspace*0.5+0.5;
+	vec4 light_pos = sse_vp * world_pos;
+	output.world_lightspace  = light_pos.xy / light_pos.w * 0.5+0.5;
+	output.center_lightspace = center_lightspace * 0.5+0.5;
 }

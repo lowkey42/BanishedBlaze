@@ -1,15 +1,21 @@
-#version 100
+#version auto
 precision mediump float;
 
-varying float frames_frag;
-varying float current_frame_frag;
-varying float rotation_frag;
-varying float alpha_frag;
-varying float opacity_frag;
-varying float hue_change_out_frag;
+in Vertex_out {
+	float frames;
+	float current_frame;
+	float rotation;
+	float alpha;
+	float opacity;
+	float hue_change_out;
+} input;
 
-uniform sampler2D texture;
+out vec4 out_color;
+
+
+uniform sampler2D tex;
 uniform float hue_change_in;
+
 
 vec3 rgb2hsv(vec3 c) {
 	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -28,11 +34,11 @@ vec3 hsv2rgb(vec3 c) {
 
 vec3 hue_shift(vec3 in_color) {
 	vec3 hsv = rgb2hsv(in_color);
-	hsv.x = abs(hsv.x-hue_change_in)<0.01 ? hue_change_out_frag : hsv.x;
+	hsv.x = abs(hsv.x-hue_change_in)<0.01 ? input.hue_change_out : hsv.x;
 	return hsv2rgb(hsv);
 }
 vec4 read_albedo(vec2 uv) {
-	vec4 c = texture2D(texture, uv);
+	vec4 c = texture(tex, uv);
 	c.rgb = hue_shift(pow(c.rgb, vec3(1.0)));
 	return c;
 }
@@ -47,11 +53,11 @@ void main() {
 	vec2 uv = gl_PointCoord;
 	uv.y = 1.0-uv.y;
 	uv -= vec2(0.5, 0.5);
-	uv = rotate(uv,rotation_frag);
+	uv = rotate(uv, input.rotation);
 	uv += vec2(0.5, 0.5);
-	uv.x = uv.x/frames_frag + (current_frame_frag)/frames_frag;
+	uv.x = uv.x/input.frames + (input.current_frame)/input.frames;
 
 	vec4 c = read_albedo(uv);
 
-	gl_FragColor = vec4(c.rgb, opacity_frag) * c.a * alpha_frag;
+	out_color = vec4(c.rgb, input.opacity) * c.a * input.alpha;
 }

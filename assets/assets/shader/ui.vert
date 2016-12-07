@@ -1,12 +1,12 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec2 position;
-attribute vec2 uv;
-attribute vec4 color;
+in vec2 position;
+in vec2 uv;
+in vec4 color;
 
-varying vec2 uv_frag;
-varying vec4 color_frag;
+out vec2 uv_frag;
+out vec4 color_frag;
 
 uniform mat4 vp;
 

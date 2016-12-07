@@ -1,10 +1,10 @@
-#version 100
+#version auto
 precision mediump float;
 
-attribute vec2 xy;
-attribute vec2 uv;
+in vec2 xy;
+in vec2 uv;
 
-varying vec2 uv_frag;
+out vec2 uv_frag;
 
 void main() {
 	gl_Position = vec4(xy.x*2.0, xy.y*2.0, 0.0, 1.0);

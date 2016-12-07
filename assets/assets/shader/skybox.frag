@@ -1,13 +1,16 @@
-#version 100
+#version auto
 precision mediump float;
 
-varying vec3 position_frag;
+in vec3 position_frag;
+
+out vec4 out_color;
 
 uniform vec3 tint;
 uniform float brightness;
-uniform samplerCube texture;
+uniform samplerCube tex;
+
 
 void main() {
-	gl_FragColor = vec4(pow(textureCube(texture, position_frag).rgb, vec3(2.2))*tint*brightness, 1.0);
+	out_color = vec4(pow(texture(tex, position_frag).rgb, vec3(2.2))*tint*brightness, 1.0);
 }
 

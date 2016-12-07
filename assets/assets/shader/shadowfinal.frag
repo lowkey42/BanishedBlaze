@@ -1,14 +1,15 @@
 #version auto
 precision mediump float;
 
-in vec2 world_lightspace_frag;
-in vec2 center_lightspace_frag;
+in Vertex_out {
+	vec2 world_lightspace;
+	vec2 center_lightspace;
+} input;
 
 out vec4 out_color;
 
 uniform sampler2D distance_map_tex;
 uniform sampler2D occlusions;
-
 uniform int current_light_index;
 
 
@@ -18,7 +19,7 @@ vec3 sample_shadow_ray(vec2 tc, float r) {
 	float light_radius = 2.0; // TODO: get from uniform
 
 
-	vec4 s = texture2D(distance_map_tex, tc);
+	vec4 s = texture(distance_map_tex, tc);
 	float occluder_dist = s.a;
 
 	if(occluder_dist>=r) {
@@ -30,7 +31,7 @@ vec3 sample_shadow_ray(vec2 tc, float r) {
 	vec3 color= vec3(0,0,0);
 	for(float x=-8.0; x<=8.0; x+=1.0) {
 		vec2 coord = vec2(tc.x + x/8.0 / 512.0 * p, tc.y);
-		vec4 shadowmap = texture2D(distance_map_tex, coord);
+		vec4 shadowmap = texture(distance_map_tex, coord);
 
 		color.r += step(r, shadowmap.r);
 		color.g += step(r, shadowmap.g);
@@ -44,7 +45,7 @@ vec3 sample_shadow_ray(vec2 tc, float r) {
 
 
 void main() {
-	vec2 dir = center_lightspace_frag - world_lightspace_frag.xy;
+	vec2 dir = input.center_lightspace - input.world_lightspace.xy;
 	float dist = length(dir);
 	dir /= dist;
 
@@ -56,7 +57,7 @@ void main() {
 
 	vec4 c = vec4(sample_shadow_ray(tc, dist), 1.0);
 
-	vec4 occluder = texture2D(occlusions, world_lightspace_frag);
+	vec4 occluder = texture(occlusions, input.world_lightspace);
 	c.rgb = min(c.rgb, step(occluder.rgb, vec3(0.2)));
 
 	out_color = c;

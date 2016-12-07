@@ -17,8 +17,11 @@ frag_shader:particles = shader/particles.frag
 
 vert_shader:sprite = shader/sprite.vert
 frag_shader:sprite = shader/sprite.frag
-frag_shader:sprite_bg = shader/sprite_bg.frag
 frag_shader:sprite_shadow = shader/sprite_shadowcaster.frag
+vert_shader:sprite_shadow = shader/sprite_shadowcaster.vert
+
+vert_shader:decal = shader/decal.vert
+frag_shader:decal = shader/decal.frag
 
 vert_shader:skybox = shader/skybox.vert
 frag_shader:skybox = shader/skybox.frag

@@ -1,17 +1,19 @@
-#version 100
+#version auto
 precision mediump float;
 
-varying vec2 uvl;
+in vec2 uvl;
 
-uniform sampler2D texture;
+out vec4 out_color;
+
+uniform sampler2D tex;
 uniform vec4 color;
 uniform vec4 clip;
 
 void main() {
-	vec4 c = texture2D(texture, uvl);
+	vec4 c = texture(tex, uvl);
 
 	if(c.a>0.1) {
-		gl_FragColor = c;
+		out_color = c;
 	} else
-		gl_FragColor = vec4(1.0, 0.0, 1.0, 0.5);
+		out_color = vec4(1.0, 0.0, 1.0, 0.5);
 }
