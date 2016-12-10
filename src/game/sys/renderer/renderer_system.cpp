@@ -46,14 +46,17 @@ namespace renderer {
 	      _light_renderer(_graphics_ctx, entities, _assets),
 	      _effect_renderer(engine),
 	      _skybox(_assets) {
+
+		_skybox.brightness(0.1f); // TODO
 		
+		_render_queue.shared_uniforms(std::make_shared<Uniform_map<4, 4*4*2*sizeof(float)>>());
 		
 		_post_shader.attach_shader(engine.assets().load<Shader>("vert_shader:post"_aid))
 		            .attach_shader(engine.assets().load<Shader>("frag_shader:post"_aid))
 		            .bind_all_attribute_locations(simple_vertex_layout)
 		            .build()
 		            .uniforms(make_uniform_map(
-		                "texture", int(Texture_unit::last_frame),
+		                "tex", int(Texture_unit::last_frame),
 		                "texture_glow", int(Texture_unit::temporary),
 		                "gamma", _graphics_ctx.settings().gamma,
 		                "texture_size", framebuffer_size(engine),
@@ -83,9 +86,10 @@ namespace renderer {
 		// set global uniform block
 		auto globals = _set_global_uniforms(cam);
 		
-		_forward_renderer.draw();
-		
 		_draw_decals();
+		_decals_canvas.get_attachment("color"_strid).bind(int(Texture_unit::decals));
+
+		_forward_renderer.draw();
 		
 		// draw lights and shadows
 		_forward_renderer.flush_occluders(_light_renderer.occluder_command_queue());
@@ -102,6 +106,7 @@ namespace renderer {
 		// flush queue to canvas
 		canvas.bind_target();
 		canvas.set_viewport();
+		canvas.clear({0,0,0}, true);
 		_render_queue.flush();
 		
 		
@@ -116,6 +121,9 @@ namespace renderer {
 		graphic::draw_fullscreen_quad(frame, Texture_unit::last_frame);
 
 		_canvas_first_active = !_canvas_first_active;
+
+
+		debug_draw_framebuffer(_decals_canvas);
 	}
 	
 	void Renderer_system::_draw_decals() {
@@ -125,7 +133,7 @@ namespace renderer {
 		
 		_decals_canvas.bind_target();
 		_decals_canvas.set_viewport();
-		_decals_canvas.clear();
+		_decals_canvas.clear({0,0,0}, true);
 		_forward_renderer.draw_decals(_render_queue);
 		_render_queue.flush();
 	}
@@ -141,8 +149,8 @@ namespace renderer {
 		Global_uniforms globals;
 		globals.view = cam.view();
 		globals.proj = cam.proj();
-		globals.vp = glm::inverse(cam.vp());
-		globals.vp_inv = glm::inverse(cam.vp());
+		globals.vp = cam.vp();
+		globals.vp_inv = glm::inverse(globals.vp);
 		globals.eye = glm::vec4(cam.eye_position(), 1.f);
 		
 		auto sse_view = cam.view();
@@ -151,6 +159,7 @@ namespace renderer {
 		globals.sse_vp_inv = glm::inverse(globals.sse_vp);
 			
 		_global_uniforms.set(globals);
+		_render_queue.shared_uniforms()->emplace("vp", globals.vp);
 		return globals;
 	}
 	

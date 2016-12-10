@@ -32,7 +32,7 @@ void main() {
 	const float PI = 3.141;
 
 
-	float tau = 0.00006; // density,  probability of collision
+	float tau = 0.00008; // density,  probability of collision
 	float albedo = 0.25; // probability of scattering (not absorbing) after collision
 	float phi = 10000.0;
 
@@ -44,8 +44,10 @@ void main() {
 
 	vec3 light_dir = light[current_light_index].pos.xyz - input.world_pos;
 	float light_dist = length(light_dir);
-	float light_dist2 = light_dist*light_dist;
 	light_dir /= light_dist;
+
+	light_dist = max(0.0, light_dist-light[current_light_index].src_radius);
+	float light_dist2 = light_dist*light_dist;
 
 
 	// calculate a: length of the ray that is in the light range (radius of the spherical cap)

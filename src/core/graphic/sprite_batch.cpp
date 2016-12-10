@@ -58,6 +58,8 @@ namespace graphic {
 		              .attach_shader(asset_manager.load<Shader>("frag_shader:sprite"_aid))
 		              .bind_all_attribute_locations(sprite_layout)
 		              .build()
+		              .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		              .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		              .uniforms(make_uniform_map(
 		                  "albedo_tex", int(Texture_unit::color),
 		                  "normal_tex", int(Texture_unit::normal),

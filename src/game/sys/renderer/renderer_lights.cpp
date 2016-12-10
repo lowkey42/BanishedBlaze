@@ -26,6 +26,7 @@ namespace sys {
 namespace renderer {
 
 	using namespace graphic;
+	using namespace unit_literals;
 
 	namespace {
 		constexpr auto shadowed_lights = 4;
@@ -130,8 +131,10 @@ namespace renderer {
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadowmap"_aid))
 		        .bind_all_attribute_locations(simple_vertex_layout)
 		        .build()
+		        .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
-		            "occlusions", 0,
+		            "occlusions", int(Texture_unit::color),
 		            "shadowmap_size", shadowmap_size
 		        ));
 
@@ -140,9 +143,11 @@ namespace renderer {
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadowfinal"_aid))
 		        .bind_all_attribute_locations(simple_vertex_layout)
 		        .build()
+		        .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
-		            "distance_map_tex", 0,
-		            "occlusions", 1
+		            "distance_map_tex", int(Texture_unit::temporary),
+		            "occlusions", int(Texture_unit::color)
 		        ));
 
 		_light_volumn_shader
@@ -150,8 +155,10 @@ namespace renderer {
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:light_volumn"_aid))
 		        .bind_all_attribute_locations(light_volumn_vertex_layout)
 		        .build()
+		        .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
-		            "shadowmap_tex", 0,
+		            "shadowmap_tex", int(Texture_unit::temporary),
 		            "depth_tex", int(Texture_unit::height)
 		        ));
 
@@ -160,8 +167,10 @@ namespace renderer {
 		        .attach_shader(asset_manager.load<Shader>("frag_shader:shadow_blur"_aid))
 		        .bind_all_attribute_locations(simple_vertex_layout)
 		        .build()
+		        .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
-		            "texture", 0,
+		            "tex", int(Texture_unit::temporary),
 		            "texture_size", glm::vec2(shadowmap_tex.width(), shadowmap_tex.height())
 		        ));
 		
@@ -183,7 +192,7 @@ namespace renderer {
 
 
 		_collect_lights(globals);
-		
+
 		_light_uniforms.update([&](Light_uniforms& u) {
 			_set_uniforms(u, globals);
 		});
@@ -235,7 +244,7 @@ namespace renderer {
 		for(Light_comp& light : _lights) {
 			auto& trans = light.owner().get<physics::Transform_comp>().get_or_throw();
 
-			auto r = light.radius().value();
+			auto r = light.area_of_effect().value();
 			auto dist = glm::distance2(remove_units(trans.position()).xy(), globals.eye.xy());
 
 			auto score = 1.f/dist;
@@ -257,10 +266,10 @@ namespace renderer {
 		});
 	}
 
-	void Renderer_lights::_set_uniforms(Light_uniforms uniforms, const Global_uniforms& globals) {
+	void Renderer_lights::_set_uniforms(Light_uniforms& uniforms, const Global_uniforms& globals) {
 		uniforms.ambient_light    = glm::vec4(_scene_settings.ambient_light);
-		uniforms.direcional_light = glm::vec4(_scene_settings.dir_light_color, 1.f);
-		uniforms.direcional_dir   = glm::vec4(_scene_settings.dir_light_direction, 0.f);
+		uniforms.directional_light = glm::vec4(_scene_settings.dir_light_color, 1.f);
+		uniforms.directional_dir   = glm::vec4(_scene_settings.dir_light_direction, 0.f);
 
 
 		// project lights to the z=0 plane to get the position the occlusionmap needs to be sampled at
@@ -288,13 +297,13 @@ namespace renderer {
 			auto offset = light.transform->resolve_relative(light.light->offset());
 			light_uniforms.position  = glm::vec4(remove_units(light.transform->position()) + offset, 1.f);
 			light_uniforms.flat_position = glm::vec4(light.flat_pos, 0,0);
-			light_uniforms.direction = glm::vec4(- light.transform->rotation().value()
-			                           + light.light->_direction.value());
+			light_uniforms.direction = - light.transform->rotation().value()
+			                           + light.light->_direction.value();
 			
 			light_uniforms.color = glm::vec4(light.light->color(),1.f);
 			light_uniforms.angle = process_angle(light.light->_angle);
-			light_uniforms.area_of_effect = light.light->_radius.value();
-			light_uniforms.src_radius = 0.5f; // TODO: get from light
+			light_uniforms.area_of_effect = light.light->area_of_effect() / 1_m * light.transform->scale();
+			light_uniforms.src_radius = light.light->src_radius() / 1_m * light.transform->scale();
 		}
 	}
 
@@ -308,12 +317,11 @@ namespace renderer {
 
 	void Renderer_lights::_render_shadow_maps() {
 		_distance_shader.bind();
-		_occlusion_map_texture->bind(1);
 
 		_distance_map.bind_target();
 		_distance_map.set_viewport();
 
-		draw_fullscreen_quad(*_occlusion_map_texture);
+		draw_fullscreen_quad(*_occlusion_map_texture, Texture_unit::color);
 	}
 
 	void Renderer_lights::_blur_shadows_maps() {
@@ -324,23 +332,23 @@ namespace renderer {
 
 		_shadow_maps.front().set_viewport();
 
-		for(auto i=0; i<shadowed_lights; i++) {
-			_shadow_maps.at(std::size_t(i)).bind_target();
+		for(auto i=0u; i<_relevant_lights.size(); i++) {
+			_shadow_maps.at(i).bind_target();
 
-			_shadow_shader.set_uniform("center_lightspace", _relevant_lights.at(std::size_t(i)).flat_pos);
-			_shadow_shader.set_uniform("current_light_index", i);
-			draw_fullscreen_quad(*_distance_map_texture);
+			_shadow_shader.set_uniform("center_lightspace", _relevant_lights.at(i).flat_pos);
+			_shadow_shader.set_uniform("current_light_index", int(i));
+			draw_fullscreen_quad(*_distance_map_texture, Texture_unit::temporary);
 		}
 
 		_blur_shader.bind();
 		for(auto& shadow_map : _shadow_maps) {
 			_shadow_map_tmp.bind_target();
 			_blur_shader.set_uniform("horizontal", false);
-			draw_fullscreen_quad(shadow_map.get_attachment("color"_strid));
+			draw_fullscreen_quad(shadow_map.get_attachment("color"_strid), Texture_unit::temporary);
 
 			shadow_map.bind_target();
 			_blur_shader.set_uniform("horizontal", true);
-			draw_fullscreen_quad(_shadow_map_tmp.get_attachment("color"_strid));
+			draw_fullscreen_quad(_shadow_map_tmp.get_attachment("color"_strid), Texture_unit::temporary);
 		}
 	}
 

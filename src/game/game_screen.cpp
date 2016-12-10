@@ -53,7 +53,7 @@ namespace lux {
 		           .bind_all_attribute_locations(simple_vertex_layout)
 		           .build()
 		           .uniforms(make_uniform_map(
-		               "texture", int(Texture_unit::color)
+		               "tex", int(Texture_unit::color)
 		           ));
 
 		_mailbox.subscribe_to([&](input::Once_action& e){

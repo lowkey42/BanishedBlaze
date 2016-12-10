@@ -26,7 +26,8 @@ namespace renderer {
 
 			auto color(Rgb color)noexcept {_color=color;}
 			auto color()const noexcept {return _color*_color_factor;}
-			auto radius()const noexcept {return _radius;}
+			auto src_radius()const noexcept {return _src_radius;}
+			auto area_of_effect()const noexcept {return _area_of_effect;}
 			auto offset()const noexcept {return _offset;}
 			auto brightness_factor(float f) {_color_factor = f;}
 			auto shadowcaster()const noexcept {return _shadowcaster;}
@@ -37,13 +38,14 @@ namespace renderer {
 			Angle _direction;
 			Angle _angle;
 			Rgb _color;
-			glm::vec3 _factors {1,0,1};
 			bool _shadowcaster = true;
 
 			float _color_factor = 1.f;
-			bool _radius_based;
-			Distance _radius;
+			Distance _src_radius;
+			Distance _area_of_effect;
 			glm::vec3 _offset;
+
+			void _update_area_of_effect();
 	};
 
 }

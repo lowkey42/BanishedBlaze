@@ -12,11 +12,13 @@ uniform sampler2D distance_map_tex;
 uniform sampler2D occlusions;
 uniform int current_light_index;
 
+#include <_uniforms_lighting.glsl>
+
 
 vec3 sample_shadow_ray(vec2 tc, float r) {
 	const float dist_per_arc = 0.02454; // tan(360^/numRays)*2.0
 
-	float light_radius = 2.0; // TODO: get from uniform
+	float light_radius = light[current_light_index].src_radius;
 
 
 	vec4 s = texture(distance_map_tex, tc);

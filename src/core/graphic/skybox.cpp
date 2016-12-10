@@ -77,8 +77,10 @@ namespace graphic {
 		        .attach_shader(assets.load<Shader>("frag_shader:skybox"_aid))
 		        .bind_all_attribute_locations(sky_vertex_layout)
 		        .build()
+		        .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
-		            "texture", int(Texture_unit::environment)
+		            "tex", int(Texture_unit::environment)
 		        ));
 	}
 

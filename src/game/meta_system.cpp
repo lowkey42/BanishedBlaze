@@ -120,12 +120,12 @@ namespace lux {
 
 	void Meta_system::draw(util::maybe<const graphic::Camera&> cam_mb) {
 		const auto& cam = cam_mb.get_or_other(camera.camera());
-		
-		renderer.draw(cam);
-		
-		
+
+
 		renderer.effects().motion_blur(camera.motion_blur_dir(),
 		                               camera.motion_blur());
+		
+		renderer.draw(cam);
 	}
 
 }

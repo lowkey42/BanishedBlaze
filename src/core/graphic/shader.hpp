@@ -72,7 +72,7 @@ namespace graphic {
 			Shader_program& build();
 			Shader_program& uniforms(std::unique_ptr<IUniform_map>&&);
 			Shader_program& detach_all();
-			Shader_program& uniform_buffer(const char* block_name, int slot);
+			Shader_program& uniform_buffer(const char* block_name, unsigned int slot);
 
 
 			Shader_program& bind();
@@ -89,8 +89,8 @@ namespace graphic {
 
 		private:
 			struct Uniform_buffer_entry {
-				int index=0;
-				int slot=0;
+				unsigned int index=-1;
+				unsigned int slot=0;
 			};
 
 			template<class T, class=void>

@@ -293,7 +293,7 @@ namespace graphic {
 		           .bind_all_attribute_locations(simple_vertex_layout)
 		           .build()
 		           .uniforms(make_uniform_map(
-		                "texture", int(Texture_unit::color),
+		                "tex", int(Texture_unit::color),
 		                "clip", glm::vec4(0,0,1,1),
 		                "layer", 1.0f
 		           ));

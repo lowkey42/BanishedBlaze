@@ -12,26 +12,26 @@ namespace graphic {
 	using namespace glm;
 
 	namespace {
-		Vertex_layout tex_layout {
-			Vertex_layout::Mode::triangles,
-			vertex("position",  &Texture_Vertex::position),
-			vertex("uv",        &Texture_Vertex::uv)
-		};
-
 		std::unique_ptr<Shader_program> tex_shader;
 
 		std::unique_ptr<Object> single_quat_tex;
 
-		const auto single_tex_vert = std::vector<Simple_vertex> {
-			Simple_vertex{{-0.5f,-0.5f}, {0,0}},
-			Simple_vertex{{-0.5f,+0.5f}, {0,1}},
-			Simple_vertex{{+0.5f,+0.5f}, {1,1}},
+		const auto single_tex_vert = std::vector<Texture_Vertex> {
+			Texture_Vertex{{-0.5f,-0.5f}, {0,0}},
+			Texture_Vertex{{-0.5f,+0.5f}, {0,1}},
+			Texture_Vertex{{+0.5f,+0.5f}, {1,1}},
 
-			Simple_vertex{{+0.5f,+0.5f}, {1,1}},
-			Simple_vertex{{-0.5f,-0.5f}, {0,0}},
-			Simple_vertex{{+0.5f,-0.5f}, {1,0}}
+			Texture_Vertex{{+0.5f,+0.5f}, {1,1}},
+			Texture_Vertex{{-0.5f,-0.5f}, {0,0}},
+			Texture_Vertex{{+0.5f,-0.5f}, {1,0}}
 		};
 	}
+
+	Vertex_layout texture_batch_layout {
+		Vertex_layout::Mode::triangles,
+		vertex("position",  &Texture_Vertex::position),
+		vertex("uv",        &Texture_Vertex::uv)
+	};
 
 	Texture_Vertex::Texture_Vertex(glm::vec2 pos, glm::vec2 uv_coords,
 	                             const graphic::Texture* texture)
@@ -43,10 +43,10 @@ namespace graphic {
 		tex_shader = std::make_unique<Shader_program>();
 		tex_shader->attach_shader(asset_manager.load<Shader>("vert_shader:simple"_aid))
 		           .attach_shader(asset_manager.load<Shader>("frag_shader:simple"_aid))
-		           .bind_all_attribute_locations(tex_layout)
+		           .bind_all_attribute_locations(texture_batch_layout)
 		           .build()
 		           .uniforms(make_uniform_map(
-		               "texture", int(Texture_unit::color),
+		               "tex", int(Texture_unit::color),
 		               "model", glm::mat4(),
 		               "clip", glm::vec4{0,0,1,1},
 		               "color", glm::vec4{1,1,1,1}
@@ -130,7 +130,7 @@ namespace graphic {
 
 		for(auto& vert : single_tex_vert) {
 			auto uv = sprite_clip.xy() + uv_size * vert.uv;
-			_vertices.emplace_back(transform(vert.xy), uv, &texture);
+			_vertices.emplace_back(transform(vert.position), uv, &texture);
 		}
 	}
 
@@ -202,7 +202,8 @@ namespace graphic {
 			_objects.reserve(req_objs);
 			req_objs-=_objects.size();
 			for(auto i=0u; i<req_objs; i++) {
-				_objects.emplace_back(tex_layout, create_dynamic_buffer<Texture_Vertex>(8));
+				_objects.emplace_back(texture_batch_layout,
+				                      create_dynamic_buffer<Texture_Vertex>(8));
 			}
 		}
 	}

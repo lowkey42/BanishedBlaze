@@ -45,7 +45,7 @@ namespace renderer {
 		            .bind_all_attribute_locations(simple_vertex_layout)
 		            .build()
 		            .uniforms(make_uniform_map(
-		                 "texture", int(Texture_unit::temporary),
+		                 "tex", int(Texture_unit::temporary),
 		                 "texture_size", blur_size
 		             ));
 
@@ -55,7 +55,7 @@ namespace renderer {
 		           .bind_all_attribute_locations(simple_vertex_layout)
 		           .build()
 		           .uniforms(make_uniform_map(
-		                "texture", int(Texture_unit::last_frame),
+		                "tex", int(Texture_unit::last_frame),
 		                "texture_size", blur_size
 		            ));
 
@@ -64,7 +64,7 @@ namespace renderer {
 		            .bind_all_attribute_locations(simple_vertex_layout)
 		            .build()
 		            .uniforms(make_uniform_map(
-		                 "texture", int(Texture_unit::last_frame)
+		                 "tex", int(Texture_unit::last_frame)
 		             ));
 		
 		

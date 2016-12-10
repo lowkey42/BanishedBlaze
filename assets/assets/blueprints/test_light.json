@@ -3,7 +3,7 @@
     },
     "Light": {
         "color": {"r":5.0, "g":5.0, "b":4.5},
-        "radius": 15,
+        "radius": 1.0,
 		"offset": {"z":0.1}
     },
     "Sprite": {

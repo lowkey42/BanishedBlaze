@@ -121,6 +121,10 @@ namespace graphic {
 		log<<"Compiling shader "<<_handle<<":"<<name;
 		read_gl_info_log(_handle).process([&](const auto& _){
 			log<<"\n"<<_;
+
+			if(!success) {
+				log<<"\n\nSOURCE:\n"<<source;
+			}
 		});
 		log<<std::endl;
 
@@ -240,17 +244,15 @@ namespace graphic {
 		_uniform_locations_mat3.clear();
 		_uniform_locations_mat4.clear();
 
+		glUseProgram(_handle);
 		if(_uniforms) {
-			glUseProgram(_handle);
 			_uniforms->bind_all(*this);
-			glUseProgram(0);
 		}
 		
-		for(auto& uniform_buffer : _uniform_buffer_locations) {
-			glUniformBlockBinding(_handle,
-			                      uniform_buffer.second.index,
-			                      uniform_buffer.second.slot);
+		for(auto& ubo : _uniform_buffer_locations) {
+			uniform_buffer(ubo.first.c_str(), ubo.second.slot);
 		}
+		glUseProgram(0);
 
 		return *this;
 	}
@@ -258,6 +260,7 @@ namespace graphic {
 	Shader_program& Shader_program::uniforms(std::unique_ptr<IUniform_map>&& uniforms) {
 		_uniforms = std::move(uniforms);
 		if(_uniforms) {
+			INVARIANT(_handle, "Program has not been compiled/linked, yet!");
 			glUseProgram(_handle);
 			_uniforms->bind_all(*this);
 		}
@@ -265,16 +268,23 @@ namespace graphic {
 		return *this;
 	}
 	
-	Shader_program& Shader_program::uniform_buffer(const char* block_name, int slot) {
+	Shader_program& Shader_program::uniform_buffer(const char* block_name, unsigned int slot) {
+		static const constexpr auto invalid_index = static_cast<unsigned int>(-1);
+
 		auto& block = _uniform_buffer_locations[block_name];
-		if(block.index==0 || block.slot!=slot) {
-			block.slot = slot;
-			
-			if(block.index==0)
-				block.index = glGetUniformBlockIndex(_handle, block_name);
-			
+		if(block.index==invalid_index) {
+			INVARIANT(_handle, "Program has not been compiled/linked, yet!");
+			block.index = glGetUniformBlockIndex(_handle, block_name);
+			INVARIANT(block.index!=GL_INVALID_OPERATION, "uniform_buffer(...) called on invalid program.");
+		//	if(block.index==GL_INVALID_INDEX)
+		//		ERROR("UniformBlock '"<<block_name<<"' not found");
+		}
+
+		if(block.slot!=slot && block.index!=GL_INVALID_INDEX) {
 			glUniformBlockBinding(_handle, block.index, slot);
 		}
+
+		block.slot = slot;
 		
 		return *this;
 	}
@@ -311,13 +321,17 @@ namespace graphic {
 			if (it == cache.end()) {
 				it = cache.emplace(name,
 				                   ET{glGetUniformLocation(shader_handle, name), value}).first;
+
+				INVARIANT(it->second.handle!=GL_INVALID_OPERATION,
+				          "set_uniform(...) called on invalid program.");
+
 				dirty = true;
 			} else if(it->second.dirty(value)) {
 				dirty = true;
 				it->second.set(value);
 			}
 
-			return std::make_pair(dirty, it->second.handle);
+			return std::make_pair(dirty && it->second.handle!=-1, it->second.handle);
 		}
 	}
 

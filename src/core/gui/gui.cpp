@@ -340,7 +340,7 @@ namespace gui {
 				    .bind_all_attribute_locations(nk_vertex_layout)
 				    .build()
 				    .uniforms(make_uniform_map(
-				        "texture", int(Texture_unit::temporary)
+				        "tex", int(Texture_unit::temporary)
 				    ));
 			}
 			void draw(nk_context& ctx, Camera_2d& camera) {

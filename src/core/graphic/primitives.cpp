@@ -32,7 +32,9 @@ namespace graphic {
 		        attach_shader(asset_manager.load<Shader>("vert_shader:dashed_line"_aid))
 		       .attach_shader(asset_manager.load<Shader>("frag_shader:dashed_line"_aid))
 		       .bind_all_attribute_locations(line_vertex_layout)
-		       .build();
+		       .build()
+		       .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+		       .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting));
 
 		std::vector<Line_vertex> unit_line_data {
 			{0},

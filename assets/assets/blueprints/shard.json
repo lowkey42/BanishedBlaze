@@ -9,8 +9,8 @@
 		"hue_change_replacement": 0
 	},
 	"Light": {
-		"color": {"r":800.0, "g":0.2, "b":0.2},
-		"factors": {"x":0.0, "y":0.1, "z":10.0},
+		"color": {"r":50.0, "g":0.2, "b":0.2},
+		"radius": 2.0,
 		"offset": {"z":0.5},
 		"shadowcaster": false
 	},

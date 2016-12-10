@@ -21,7 +21,7 @@ uniform mediump int current_light_index;
 
 
 void main() {
-	vec3 position = light[current_light_index].pos.xyz + vec3(xy*light[current_light_index].area_of_effect*1.2, 0.0);
+	vec3 position = light[current_light_index].pos.xyz + vec3(xy*light[current_light_index].area_of_effect*1.01, 0.0);
 	position.z -= 0.5;
 
 	vec4 view_pos = vp * vec4(position, 1.0);

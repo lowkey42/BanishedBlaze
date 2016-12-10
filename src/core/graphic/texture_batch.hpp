@@ -27,12 +27,14 @@ namespace graphic {
 		glm::vec2 uv;
 		const graphic::Texture* tex;
 
-		Texture_Vertex(glm::vec2 pos, glm::vec2 uv_coords, const graphic::Texture*);
+		Texture_Vertex(glm::vec2 pos, glm::vec2 uv_coords, const graphic::Texture* tex=nullptr);
 
 		bool operator<(const Texture_Vertex& rhs)const noexcept {
 			return tex < rhs.tex;
 		}
 	};
+
+	extern Vertex_layout texture_batch_layout;
 
 	extern void init_texture_renderer(asset::Asset_manager& asset_manager);
 

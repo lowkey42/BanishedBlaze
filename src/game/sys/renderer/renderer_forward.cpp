@@ -18,14 +18,15 @@ namespace renderer {
 	namespace {
 		auto build_occluder_shader(asset::Asset_manager& asset_manager) -> Shader_program {
 			Shader_program prog;
-			prog.attach_shader(asset_manager.load<Shader>("vert_shader:sprite"_aid))
+			prog.attach_shader(asset_manager.load<Shader>("vert_shader:sprite_shadow"_aid))
 			    .attach_shader(asset_manager.load<Shader>("frag_shader:sprite_shadow"_aid))
 			    .bind_all_attribute_locations(sprite_layout)
 			    .build()
+			    .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+			    .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 			    .uniforms(make_uniform_map(
 			                  "albedo_tex", int(Texture_unit::color),
-			                  "height_tex", int(Texture_unit::height),
-			                  "model", glm::mat4()
+			                  "height_tex", int(Texture_unit::height)
 			    ));
 
 			return prog;
@@ -34,8 +35,10 @@ namespace renderer {
 			Shader_program prog;
 			prog.attach_shader(asset_manager.load<Shader>("vert_shader:decal"_aid))
 			    .attach_shader(asset_manager.load<Shader>("frag_shader:decal"_aid))
-			    .bind_all_attribute_locations(sprite_layout)
+			    .bind_all_attribute_locations(texture_batch_layout)
 			    .build()
+			    .uniform_buffer("globals", int(Uniform_buffer_slot::globals))
+			    .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 			    .uniforms(make_uniform_map(
 			                  "albedo_tex", int(Texture_unit::color)
 			    ));

@@ -66,19 +66,17 @@ namespace renderer {
 	struct Point_light_uniforms {
 		glm::vec4 position;
 		glm::vec4 flat_position;
-		glm::vec4 direction;
 		glm::vec4 color;
+		float direction;
 		float angle;
 		float area_of_effect;
 		float src_radius;
-		
-		float _padding;
 	};
 	
 	struct Light_uniforms {
 		glm::vec4 ambient_light;
-		glm::vec4 direcional_light;
-		glm::vec4 direcional_dir;
+		glm::vec4 directional_light;
+		glm::vec4 directional_dir;
 		
 		Point_light_uniforms light[num_lights];
 	};
@@ -133,7 +131,7 @@ namespace renderer {
 
 
 			void _collect_lights(const Global_uniforms& globals);
-			void _set_uniforms(Light_uniforms uniforms, const Global_uniforms&);
+			void _set_uniforms(Light_uniforms& uniforms, const Global_uniforms&);
 			void _flush_occlusion_map();
 			void _render_shadow_maps();
 			void _blur_shadows_maps();

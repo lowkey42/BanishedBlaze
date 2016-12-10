@@ -69,7 +69,7 @@ namespace graphic {
 		             .bind_all_attribute_locations(debug_layout)
 		             .build()
 		             .uniforms(make_uniform_map(
-		                 "texture", int(Texture_unit::temporary),
+		                 "tex", int(Texture_unit::temporary),
 		                 "vp", vp,
 		                 "model", glm::mat4(),
 		                 "clip", glm::vec4{0,0,1,1},
