@@ -250,7 +250,10 @@ namespace graphic {
 		}
 		
 		for(auto& ubo : _uniform_buffer_locations) {
-			uniform_buffer(ubo.first.c_str(), ubo.second.slot);
+			ubo.second.index = -1;
+			auto slot = ubo.second.slot;
+			ubo.second.slot = 0;
+			uniform_buffer(ubo.first.c_str(), slot);
 		}
 		glUseProgram(0);
 

@@ -21,7 +21,7 @@ out Vertex_out {
 	float decals_intensity;
 	
 	mat3 TBN;
-} output;
+} vert_out;
 
 #include <_uniforms_globals.glsl>
 
@@ -32,20 +32,20 @@ void main() {
 	gl_Position = pos_vp;
 
 	vec4 pos_vp0 = sse_vp * vec4(position.xy + decals_offset.xy, position.z/4.0, 1);
-	output.decals_uv = pos_vp0.xy/pos_vp0.w/2.0+0.5;
+	vert_out.decals_uv = pos_vp0.xy/pos_vp0.w/2.0+0.5;
 
-	output.shadowmap_uv = pos_vp.xy/pos_vp.w/2.0+0.5;
-	output.uv = uv;
-	output.uv_clip = uv_clip;
-	output.pos = position;
-	output.hue_change = hue_change;
-	output.shadow_resistence = shadow_resistence;
-	output.decals_intensity = decals_intensity;
+	vert_out.shadowmap_uv = pos_vp.xy/pos_vp.w/2.0+0.5;
+	vert_out.uv = uv;
+	vert_out.uv_clip = uv_clip;
+	vert_out.pos = position;
+	vert_out.hue_change = hue_change;
+	vert_out.shadow_resistence = shadow_resistence;
+	vert_out.decals_intensity = decals_intensity;
 
 	// TODO: transform tangent and normal too!
 	vec3 T = normalize(vec3(tangent,0.0));
 	vec3 N = vec3(0.0,0.0,1.0);
 	vec3 B = cross(N, T);
-	output.TBN = mat3(T, B, N);
+	vert_out.TBN = mat3(T, B, N);
 }
 

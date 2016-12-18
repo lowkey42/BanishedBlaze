@@ -11,7 +11,7 @@ out Vertex_out {
 	vec2 shadowmap_uv;
 	vec2 shadowmap_luv;
 	vec3 world_pos;
-} output;
+} vert_out;
 
 
 uniform mediump int current_light_index;
@@ -21,7 +21,7 @@ uniform mediump int current_light_index;
 
 
 void main() {
-	vec3 position = light[current_light_index].pos.xyz + vec3(xy*light[current_light_index].area_of_effect*1.01, 0.0);
+	vec3 position = light[current_light_index].pos.xyz + vec3(xy*light[current_light_index].area_of_effect*1.1, 0.0);
 	position.z -= 0.5;
 
 	vec4 view_pos = vp * vec4(position, 1.0);
@@ -29,10 +29,10 @@ void main() {
 
 
 	vec4 pos_center = sse_vp * vec4(light[current_light_index].pos.xy, 0.0, 1);
-	output.shadowmap_luv = pos_center.xy/pos_center.w;
+	vert_out.shadowmap_luv = pos_center.xy/pos_center.w;
 	
-	output.shadowmap_uv = view_pos.xy/view_pos.w * 0.5 + 0.5;
-	output.world_uv = view_pos.xy / view_pos.w * 0.5 + 0.5;
+	vert_out.shadowmap_uv = view_pos.xy/view_pos.w * 0.5 + 0.5;
+	vert_out.world_uv = view_pos.xy / view_pos.w * 0.5 + 0.5;
 
-	output.world_pos = position;
+	vert_out.world_pos = position;
 }

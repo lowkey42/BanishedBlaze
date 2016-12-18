@@ -10,7 +10,7 @@ namespace renderer {
 	using namespace unit_literals;
 
 	namespace {
-		constexpr auto light_cutoff = 0.01f;
+		constexpr auto light_cutoff = 0.02f;
 	}
 
 	void load_component(ecs::Deserializer& state, Light_comp& comp) {

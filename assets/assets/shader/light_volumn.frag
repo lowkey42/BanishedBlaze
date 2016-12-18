@@ -6,7 +6,7 @@ in Vertex_out {
 	vec2 shadowmap_uv;
 	vec2 shadowmap_luv;
 	vec3 world_pos;
-} input;
+} frag_in;
 
 out vec4 out_color;
 
@@ -19,64 +19,104 @@ uniform sampler2D depth_tex;
 uniform mediump int current_light_index;
 
 
+float rand(vec2 c){
+    return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+float noise(vec2 p, float freq ){
+	const float PI = 3.141;
+	
+	float unit = 4.0/freq;
+	vec2 ij = floor(p/unit);
+	vec2 xy = mod(p,unit)/unit;
+	//xy = 3.*xy*xy-2.*xy*xy*xy;
+	xy = .5*(1.-cos(PI*xy));
+	float a = rand((ij+vec2(0.,0.)));
+	float b = rand((ij+vec2(1.,0.)));
+	float c = rand((ij+vec2(0.,1.)));
+	float d = rand((ij+vec2(1.,1.)));
+	float x1 = mix(a, b, xy.x);
+	float x2 = mix(c, d, xy.x);
+	return mix(x1, x2, xy.y);
+}
+
+float pNoise(vec2 p, vec2 p2){
+	float persistance = .5;
+	float n = 0.;
+	float normK = 0.;
+	float f = 4.;
+	float amp = 1.;
+	
+	n+=amp*noise(p, f);
+	f*=2.;
+	normK+=amp;
+	amp*=persistance;
+	
+	n+=amp*noise(p2, f);
+	f*=2.;
+	normK+=amp;
+	amp*=persistance;
+	
+	float nf = n/normK;
+	return nf*nf*nf*nf;
+}
+
 vec3 pixel_position(vec2 uv, float depth) {
 	vec4 pos_view = vp_inv * vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
 	return pos_view.xyz / pos_view.w;
 }
 
 float visibility(vec3 env_world_pos, float depth_offset) {
-	return input.world_pos.z + depth_offset >= env_world_pos.z ? 1.0 : 0.0;
+	return frag_in.world_pos.z + depth_offset >= env_world_pos.z ? 1.0 : 0.0;
 }
 
 void main() {
 	const float PI = 3.141;
+	const float PI_rcp = 0.31830986;
 
-
-	float tau = 0.00008; // density,  probability of collision
-	float albedo = 0.25; // probability of scattering (not absorbing) after collision
-	float phi = 10000.0;
-
+	const float tau = 0.00008; // density,  probability of collision
+	const float albedo = 0.25; // probability of scattering (not absorbing) after collision
+	const float phi = 5000.0;
+	
+	vec3 shadow = texture(shadowmap_tex, frag_in.shadowmap_uv).rgb;
+	
+	if(dot(shadow,shadow)<=0.0)
+		discard;
+	
 	float radius = light[current_light_index].area_of_effect;
 
-	vec2 uv = input.world_uv;
+	vec2 uv = frag_in.world_uv;
 	float depth = texture2D(depth_tex, uv).r;
 	vec3 env_world_pos = pixel_position(uv, depth);
 
-	vec3 light_dir = light[current_light_index].pos.xyz - input.world_pos;
-	float light_dist = length(light_dir);
-	light_dir /= light_dist;
 
-	light_dist = max(0.0, light_dist-light[current_light_index].src_radius);
-	float light_dist2 = light_dist*light_dist;
-
-
-	// calculate a: length of the ray that is in the light range (radius of the spherical cap)
-	float h  = 1.0 - clamp(light_dist / radius, 0.0, 1.0);
-	float a  = sqrt(max(0.0, 2.0*h - h*h));
-
-
-	float s = a*2.0*radius;
+	float s = radius;
+	float dl = s * 2.0 * 0.1;
 	if(s<=0.0) {
 		discard;
 	}
 
 	float L = 0.0;
-	for(float i=1.0; i>=0.0; i-=0.2) {
-		float l = s*i;
-		float dl = s * 0.1;
+	for(float i=1.0; i>=0.0; i-=0.1) {
+		float r = s*(i*2.0-1.0);
 		
-		float r = s - a*radius;
-		float d2 = light_dist2 + r*r; // distance to lightsource
-		float d = sqrt(d2);
+		float d = length(light[current_light_index].pos.xyz - (frag_in.world_pos + vec3(0,0,r)));
 
 		float v = visibility(env_world_pos, r);
-
-		float L_in = exp(-d * tau) * v * phi /4.0/PI/d2;
-		float L_i  = L_in * tau * albedo; // TODO * P(?)
-		L+= L_i * exp(-l * tau) * dl;
+		
+		float denom = d/light[current_light_index].src_radius + 1.0;
+		float attenuation = clamp(1.0 / (denom*denom) -0.0001, 0.0, 1.0) / (1.0-0.0001);
+		attenuation = pow(attenuation,0.75);
+		
+		float dRcp = 1.0/d;
+		float L_i = tau * v * phi*albedo*PI_rcp* dRcp*dRcp * exp(-d*tau)*exp(-1*tau) * dl * attenuation;
+		L+=L_i;
 	}
-
-	vec3 shadow = texture(shadowmap_tex, input.shadowmap_uv).rgb;
 	
-	out_color = vec4(light[current_light_index].color.rgb * L * shadow, 0.0);
+	vec2 fog_dir_a = vec2(0.4, -0.08);
+	vec2 fog_dir_b = vec2(0.3, 0.08);
+	float fog = mix(1.0,pNoise(frag_in.world_pos.xy+fog_dir_a*time,
+	                           frag_in.world_pos.xy+fog_dir_b*time), 0.5);
+	
+	out_color = vec4(light[current_light_index].color.rgb * L * shadow * fog, 0.0);
 }

@@ -12,7 +12,7 @@ in Vertex_out {
 	float decals_intensity;
 	
 	mat3 TBN;
-} input;
+} frag_in;
 
 out vec4 out_color;
 
@@ -53,7 +53,7 @@ float luminance(vec3 c) {
 
 vec3 hue_shift(vec3 in_color) {
 	vec3 hsv = rgb2hsv(in_color);
-	hsv.x = abs(hsv.x-input.hue_change.x)<0.1 ? input.hue_change.y+(hsv.x-input.hue_change.x) : hsv.x;
+	hsv.x = abs(hsv.x-frag_in.hue_change.x)<0.1 ? frag_in.hue_change.y+(hsv.x-frag_in.hue_change.x) : hsv.x;
 	return hsv2rgb(hsv);
 }
 vec4 read_albedo(vec2 uv) {
@@ -63,12 +63,13 @@ vec4 read_albedo(vec2 uv) {
 }
 
 void main() {
-	vec2 uv = mod(input.uv, 1.0) * (input.uv_clip.zw-input.uv_clip.xy) + input.uv_clip.xy;
+	vec2 uv = mod(frag_in.uv, 1.0) * (frag_in.uv_clip.zw-frag_in.uv_clip.xy) + frag_in.uv_clip.xy;
 
 	vec4 albedo = read_albedo(uv);
 	if(albedo.a < alpha_cutoff) {
 		discard;
 	}
+	albedo.rgb *= 5.0; // TODO
 
 	vec3 normal = texture(normal_tex, uv).xyz;
 	if(length(normal)<0.00001)
@@ -76,16 +77,16 @@ void main() {
 	else {
 		normal = normalize(normal*2.0 - 1.0);
 	}
-	vec3 N = normalize(input.TBN * normal);
+	vec3 N = normalize(frag_in.TBN * normal);
 
 	vec3 material = texture(material_tex, uv).xyz;
 	float emmision  = material.r;
-	float roughness = mix(0.1, 0.99, material.b*material.b);
+	float roughness = 0.1;//TODO: mix(0.01, 0.99, material.b*material.b);
 	float metalness = material.g;
 
 
-	float decals_fade = clamp(1.0+input.pos.z/2.0, 0.25, 1.0) * input.decals_intensity * albedo.a;
-	vec4 decals = texture(decals_tex, input.decals_uv);
+	float decals_fade = clamp(1.0+frag_in.pos.z/2.0, 0.25, 1.0) * frag_in.decals_intensity * albedo.a;
+	vec4 decals = texture(decals_tex, frag_in.decals_uv);
 	albedo.rgb = mix(albedo.rgb, decals.rgb * decals_fade, decals.a * decals_fade);
 	emmision  = mix(emmision,  0.3, max(0.0, decals.a * decals_fade - 0.5));
 	roughness = mix(roughness, 0.2, decals.a * decals_fade);
@@ -95,10 +96,10 @@ void main() {
 	vec3 F0 = mix(vec3(0.04), albedo.rgb, metalness);
 	vec3 diff_color = albedo.rgb * (1.0-metalness);
 
-	vec3 V = normalize(input.pos - eye.xyz);
+	vec3 V = normalize(frag_in.pos - eye.xyz);
 
 
-	vec3 final_color = calc_light(input.pos, diff_color, F0, N, V, roughness)
+	vec3 final_color = calc_light(frag_in.pos, diff_color, F0, N, V, roughness)
 	                 + albedo.rgb*emmision;
 	out_color = vec4(final_color, 1.0) * albedo.a;
 }

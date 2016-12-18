@@ -17,16 +17,16 @@ vec3 calc_light(vec3 position, vec3 diff_color, vec3 F0, vec3 N, vec3 V, float r
 	color += calc_dir_light(diff_color, F0, N, V, roughness);
 
 	color += calc_point_light(position, diff_color, F0, N, V, roughness, 0)
-	        * texture(shadowmap_0_tex, input.shadowmap_uv).rgb;
+	        * texture(shadowmap_0_tex, frag_in.shadowmap_uv).rgb;
 
 	color += calc_point_light(position, diff_color, F0, N, V, roughness, 1)
-	        * texture(shadowmap_1_tex, input.shadowmap_uv).rgb;
+	        * texture(shadowmap_1_tex, frag_in.shadowmap_uv).rgb;
 
 	color += calc_point_light(position, diff_color, F0, N, V, roughness, 2)
-	        * texture(shadowmap_2_tex, input.shadowmap_uv).rgb;
+	        * texture(shadowmap_2_tex, frag_in.shadowmap_uv).rgb;
 
 	color += calc_point_light(position, diff_color, F0, N, V, roughness, 3)
-	        * texture(shadowmap_3_tex, input.shadowmap_uv).rgb;
+	        * texture(shadowmap_3_tex, frag_in.shadowmap_uv).rgb;
 
 	return color;
 }
@@ -61,8 +61,10 @@ vec3 calc_point_light(vec3 position, vec3 diff_color, vec3 F0, vec3 N, vec3 V,
 	vec3 c = calc_generic_light(light[idx].color.rgb,
 	                            diff_color, F0, roughness,
 	                            N, V, L) * attenuation;
-
-	return (c-vec3(0.01)) / (1.0-0.01);
+	
+	c = (c-vec3(0.01)) / (1.0-0.01);
+	
+	return max(c, 0.0);
 }
 
 
@@ -75,9 +77,9 @@ vec3 calc_generic_light(vec3 light_color, vec3 diff_color, vec3 F0,
 
 	vec4 spec_ct = spec_cook_torrence(F0, roughness, N,V,L,NdotL);
 
-	vec3 ks = spec_ct.rgb;
+	vec3 ks = spec_ct.rgb * 0.5; // TODO: 0.5 factor because of too strong spec
 	vec3 kd = vec3(1.0) - ks;
-	vec3 spec = light_color * NdotL * spec_ct.a * ks;
+	vec3 spec = light_color * spec_ct.a * ks;
 	vec3 diff = light_color * NdotL * diff_color * kd;
 
 	return (spec + diff);
@@ -112,7 +114,7 @@ vec4 spec_cook_torrence(vec3 F0, float roughness,
 	float k = alpha/2.0;
 	float G = G1V(NdotL,k) * G1V(NdotV,k);
 
-	float spec = max(0.0, (D*G) / (3.14*NdotL*NdotV));
+	float spec = clamp((D*G) / (3.14*NdotL*NdotV), 0.0, 1.0);
 
 	return vec4(F, spec);
 }

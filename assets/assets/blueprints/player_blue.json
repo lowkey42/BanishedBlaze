@@ -9,8 +9,8 @@
 		"size": {"x":0.56, "y":0.75}
 	},
 	"Light": {
-		"color": {"r":0.25, "g":0.25, "b":5.0},
-		"radius": 0.25,
+		"color": {"r":1.0, "g":1.0, "b":7.0},
+		"radius": 0.3,
 		"offset": {"y":0.25, "z": 0.5},
 		"shadowcaster": true
 	},

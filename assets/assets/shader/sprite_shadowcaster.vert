@@ -15,7 +15,7 @@ out Vertex_out {
 	vec4 uv_clip;
 	vec3 pos;
 	vec2 hue_change;
-} output;
+} vert_out;
 
 #include <_uniforms_globals.glsl>
 
@@ -24,9 +24,9 @@ void main() {
 	vec4 pos_vp = sse_vp * vec4(position, 1);
 	gl_Position = pos_vp;
 
-	output.uv = uv;
-	output.uv_clip = uv_clip;
-	output.pos = position;
-	output.hue_change = hue_change;
+	vert_out.uv = uv;
+	vert_out.uv_clip = uv_clip;
+	vert_out.pos = position;
+	vert_out.hue_change = hue_change;
 }
 

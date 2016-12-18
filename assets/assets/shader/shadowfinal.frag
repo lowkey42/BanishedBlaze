@@ -4,7 +4,7 @@ precision mediump float;
 in Vertex_out {
 	vec2 world_lightspace;
 	vec2 center_lightspace;
-} input;
+} frag_in;
 
 out vec4 out_color;
 
@@ -47,7 +47,7 @@ vec3 sample_shadow_ray(vec2 tc, float r) {
 
 
 void main() {
-	vec2 dir = input.center_lightspace - input.world_lightspace.xy;
+	vec2 dir = frag_in.center_lightspace - frag_in.world_lightspace.xy;
 	float dist = length(dir);
 	dir /= dist;
 
@@ -59,7 +59,7 @@ void main() {
 
 	vec4 c = vec4(sample_shadow_ray(tc, dist), 1.0);
 
-	vec4 occluder = texture(occlusions, input.world_lightspace);
+	vec4 occluder = texture(occlusions, frag_in.world_lightspace);
 	c.rgb = min(c.rgb, step(occluder.rgb, vec3(0.2)));
 
 	out_color = c;

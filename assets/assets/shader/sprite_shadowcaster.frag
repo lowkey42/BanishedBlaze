@@ -7,7 +7,7 @@ in Vertex_out {
 	vec4 uv_clip;
 	vec3 pos;
 	vec2 hue_change;
-} input;
+} frag_in;
 
 out vec4 out_color;
 
@@ -32,12 +32,12 @@ vec3 hsv2rgb(vec3 c) {
 
 vec3 hue_shift(vec3 in_color) {
 	vec3 hsv = rgb2hsv(in_color);
-	hsv.x = abs(hsv.x-input.hue_change.x)<0.1 ? input.hue_change.y+(hsv.x-input.hue_change.x) : hsv.x;
+	hsv.x = abs(hsv.x-frag_in.hue_change.x)<0.1 ? frag_in.hue_change.y+(hsv.x-frag_in.hue_change.x) : hsv.x;
 	return hsv2rgb(hsv);
 }
 
 void main() {
-	vec2 uv = mod(input.uv, 1.0) * (input.uv_clip.zw-input.uv_clip.xy) + input.uv_clip.xy;
+	vec2 uv = mod(frag_in.uv, 1.0) * (frag_in.uv_clip.zw-frag_in.uv_clip.xy) + frag_in.uv_clip.xy;
 
 	vec4 albedo = texture(albedo_tex, uv);
 	vec3 color = hue_shift(albedo.rgb);

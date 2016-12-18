@@ -49,6 +49,10 @@ namespace graphic {
 			auto unsafe_low_level_handle()const {
 				return _handle;
 			}
+			
+			Texture create_alias()const {
+				return Texture(*this, glm::vec4(0,0,width(),height()));
+			}
 
 			Texture(const Texture&) = delete;
 			Texture& operator=(const Texture&) = delete;

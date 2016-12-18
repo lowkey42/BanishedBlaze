@@ -8,7 +8,7 @@ in Vertex_out {
 	float alpha;
 	float opacity;
 	float hue_change_out;
-} input;
+} frag_in;
 
 out vec4 out_color;
 
@@ -34,7 +34,7 @@ vec3 hsv2rgb(vec3 c) {
 
 vec3 hue_shift(vec3 in_color) {
 	vec3 hsv = rgb2hsv(in_color);
-	hsv.x = abs(hsv.x-hue_change_in)<0.01 ? input.hue_change_out : hsv.x;
+	hsv.x = abs(hsv.x-hue_change_in)<0.01 ? frag_in.hue_change_out : hsv.x;
 	return hsv2rgb(hsv);
 }
 vec4 read_albedo(vec2 uv) {
@@ -53,11 +53,11 @@ void main() {
 	vec2 uv = gl_PointCoord;
 	uv.y = 1.0-uv.y;
 	uv -= vec2(0.5, 0.5);
-	uv = rotate(uv, input.rotation);
+	uv = rotate(uv, frag_in.rotation);
 	uv += vec2(0.5, 0.5);
-	uv.x = uv.x/input.frames + (input.current_frame)/input.frames;
+	uv.x = uv.x/frag_in.frames + (frag_in.current_frame)/frag_in.frames;
 
 	vec4 c = read_albedo(uv);
 
-	out_color = vec4(c.rgb, input.opacity) * c.a * input.alpha;
+	out_color = vec4(c.rgb, frag_in.opacity) * c.a * frag_in.alpha;
 }

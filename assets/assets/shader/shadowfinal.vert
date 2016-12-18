@@ -7,7 +7,7 @@ in vec2 uv;
 out Vertex_out {
 	vec2 world_lightspace;
 	vec2 center_lightspace;
-} output;
+} vert_out;
 
 #include <_uniforms_globals.glsl>
 
@@ -24,6 +24,6 @@ void main() {
 	world_pos.z=0.0;
 
 	vec4 light_pos = sse_vp * world_pos;
-	output.world_lightspace  = light_pos.xy / light_pos.w * 0.5+0.5;
-	output.center_lightspace = center_lightspace * 0.5+0.5;
+	vert_out.world_lightspace  = light_pos.xy / light_pos.w * 0.5+0.5;
+	vert_out.center_lightspace = center_lightspace * 0.5+0.5;
 }

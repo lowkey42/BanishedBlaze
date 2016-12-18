@@ -7,4 +7,5 @@ layout(std140) uniform globals {
 	mat4 sse_vp;
 	mat4 sse_vp_inv;
 	vec4 eye;
+	float time;
 };

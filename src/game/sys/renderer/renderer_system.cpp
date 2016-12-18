@@ -24,6 +24,15 @@ namespace renderer {
 
 			return framebuffer;
 		}
+		auto wrap_no_depth(Framebuffer& fb) {
+			auto& color = fb.get_attachment("color"_strid);
+			
+			auto framebuffer = Framebuffer(color.width(), color.height());
+			framebuffer.add_color_attachment("color"_strid, 0, color);
+			framebuffer.build();
+
+			return framebuffer;
+		}
 		auto create_decals_framebuffer(Engine& engine) {
 			auto size = framebuffer_size(engine) / 2.f;
 			auto framebuffer = Framebuffer(int(size.x), int(size.y));
@@ -40,6 +49,7 @@ namespace renderer {
 	      _graphics_ctx(engine.graphics_ctx()),
 	      _global_uniforms(Global_uniforms{}),
 	      _canvas{create_framebuffer(engine), create_framebuffer(engine)},
+	      _canvas_no_depth{wrap_no_depth(_canvas[0]), wrap_no_depth(_canvas[1])},
 	      _decals_canvas(create_decals_framebuffer(engine)),
 	      
 	      _forward_renderer(engine.bus(), entities, _assets),
@@ -75,12 +85,14 @@ namespace renderer {
 	}
 	
 	void Renderer_system::update(Time dt) {
+		_forward_renderer.update(dt);
 		
+		_time_acc += dt;
 	}
 
 	void Renderer_system::draw(const renderer::Camera& cam) {
 		auto& canvas      = _canvas[_canvas_first_active ? 0: 1];
-		auto& canvas_prev = _canvas[not _canvas_first_active ? 0: 1];
+		auto& canvas_nd   = _canvas_no_depth[_canvas_first_active ? 0: 1];
 		auto& frame       = *_canvas_texture[_canvas_first_active ? 0: 1];
 		
 		// set global uniform block
@@ -99,8 +111,8 @@ namespace renderer {
 		_forward_renderer.flush_objects(_render_queue);
 		_skybox.draw(_render_queue);
 
-		// TODO: might have to use a seperate FBO (without the depth buffer it's reading from)
-		_light_renderer.draw_light_volumns(_render_queue, canvas_prev.get_attachment("depth"_strid));
+		canvas_nd.bind_target();
+		_light_renderer.draw_light_volumns(_render_queue, canvas.get_attachment("depth"_strid));
 		
 		
 		// flush queue to canvas
@@ -157,6 +169,7 @@ namespace renderer {
 		sse_view[3] = glm::vec4(-_last_sse_cam_position, 1.f);
 		globals.sse_vp = cam.proj() * sse_view;
 		globals.sse_vp_inv = glm::inverse(globals.sse_vp);
+		globals.time = _time_acc.value();
 			
 		_global_uniforms.set(globals);
 		_render_queue.shared_uniforms()->emplace("vp", globals.vp);
@@ -169,6 +182,7 @@ namespace renderer {
 	
 	void Renderer_system::post_load() {
 		_forward_renderer.post_load();
+		_time_acc = Time{};
 	}
 	
 }

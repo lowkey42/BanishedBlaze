@@ -18,7 +18,7 @@ out Vertex_out {
 	float alpha;
 	float opacity;
 	float hue_change_out;
-} output;
+} vert_out;
 
 #include <_uniforms_globals.glsl>
 
@@ -37,15 +37,14 @@ void main() {
 	}
 
 	vec4 clip_space_pos = vp * vec4(position, 1.0);
-	clip_space_pos/=clip_space_pos.w;
 
 	gl_Position = clip_space_pos;
-	gl_PointSize = (1.0-clip_space_pos.z) * size * 200.0;
+	gl_PointSize = (1.0-clip_space_pos.z/clip_space_pos.w) * size * 200.0;
 
-	output.frames = frames;
-	output.current_frame = floor(current_frame);
-	output.rotation = rotation+rot_dyn;
-	output.alpha = alpha;
-	output.opacity = opacity;
-	output.hue_change_out = hue_change_out;
+	vert_out.frames = frames;
+	vert_out.current_frame = floor(current_frame);
+	vert_out.rotation = rotation+rot_dyn;
+	vert_out.alpha = alpha;
+	vert_out.opacity = opacity;
+	vert_out.hue_change_out = hue_change_out;
 }

@@ -40,6 +40,7 @@ namespace renderer {
 		glm::mat4 sse_vp;
 		glm::mat4 sse_vp_inv;
 		glm::vec4 eye;
+		float time;
 	};
 	
 	
@@ -64,6 +65,7 @@ namespace renderer {
 			graphic::Shader_program _post_shader;
 
 			graphic::Framebuffer    _canvas[2];
+			graphic::Framebuffer    _canvas_no_depth[2];
 			const graphic::Texture* _canvas_texture[2];
 			bool                    _canvas_first_active = true;
 			
@@ -75,6 +77,7 @@ namespace renderer {
 			graphic::Skybox   _skybox;
 			
 			glm::vec3 _last_sse_cam_position;
+			Time _time_acc {};
 			
 			
 			auto _set_global_uniforms(const graphic::Camera& cam) -> Global_uniforms;

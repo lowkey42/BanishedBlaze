@@ -50,12 +50,16 @@ vec4 raycast(vec2 position, vec2 dir) {
 }
 
 
-// TODO: optimize
 void main() {
 	const float PI = 3.141;
 
 	vec2 position = get_position();
 	float theta = uv_frag.x * 2.0 * PI;
+	
+	float theta_local = theta + light[int(uv_frag.y*4.0)].direction;
+	theta_local = ((theta_local/(2.0*PI)) - floor(theta_local/(2.0*PI))) * 2.0*PI - PI;
+	if(abs(theta_local) > light[int(uv_frag.y*3.0)].angle){out_color=vec4(0,0,0,0); return;}
+	
 	vec2 dir = vec2(cos(theta), sin(theta));
 
 	out_color = raycast(position, dir);

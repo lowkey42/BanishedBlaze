@@ -89,6 +89,17 @@ namespace graphic {
 			std::get<0>(res)->second = std::move(new_texture);
 		}
 	}
+	
+	void Framebuffer::add_color_attachment(util::Str_id name, int index, const Texture& other) {
+		auto new_texture = std::make_tuple(index, other.create_alias());
+
+		auto res = _attachments.emplace(name, std::move(new_texture));
+		if(!std::get<bool>(res)) {
+			WARN("rebound named attachment "<<name.str());
+			std::get<0>(res)->second = std::move(new_texture);
+		}
+	}
+	
 
 	namespace {
 		auto frambufferStatusToString(GLenum status) {

@@ -31,6 +31,7 @@ namespace graphic {
 			void add_depth_attachment();
 			void add_depth_attachment(util::Str_id name);
 			void add_color_attachment(util::Str_id name, int index, Texture_format format, bool linear_filtered=true);
+			void add_color_attachment(util::Str_id name, int index, const Texture&);
 			void build();
 
 			void clear(glm::vec3 color=glm::vec3(0,0,0), bool depth=true);
