@@ -64,7 +64,7 @@ namespace graphic {
 		                  "albedo_tex", int(Texture_unit::color),
 		                  "normal_tex", int(Texture_unit::normal),
 		                  "material_tex", int(Texture_unit::material),
-		                  "height_tex", int(Texture_unit::height),
+		                  "specular_tex", int(Texture_unit::specular),
 		                  "shadowmap_0_tex", int(Texture_unit::shadowmap_0),
 		                  "shadowmap_1_tex", int(Texture_unit::shadowmap_1),
 		                  "shadowmap_2_tex", int(Texture_unit::shadowmap_2),

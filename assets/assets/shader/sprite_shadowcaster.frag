@@ -12,7 +12,6 @@ in Vertex_out {
 out vec4 out_color;
 
 uniform sampler2D albedo_tex;
-uniform sampler2D height_tex;
 
 
 vec3 rgb2hsv(vec3 c) {
@@ -42,9 +41,8 @@ void main() {
 	vec4 albedo = texture(albedo_tex, uv);
 	vec3 color = hue_shift(albedo.rgb);
 	float alpha = albedo.a;
-	float height = texture(height_tex, uv).r;
 
-	if(alpha < 0.01 || height < 0.7) {
+	if(alpha < 0.01 || abs(frag_in.pos.z) > 0.5) {
 		discard;
 	}
 

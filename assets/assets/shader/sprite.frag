@@ -20,9 +20,9 @@ out vec4 out_color;
 #include <lighting.frag>
 
 uniform sampler2D albedo_tex;
-uniform sampler2D normal_tex;
+uniform sampler2D specular_tex;
 uniform sampler2D material_tex;
-uniform sampler2D height_tex;
+uniform sampler2D normal_tex;
 
 uniform sampler2D decals_tex;
 uniform samplerCube environment_tex;
@@ -56,8 +56,7 @@ vec3 hue_shift(vec3 in_color) {
 	hsv.x = abs(hsv.x-frag_in.hue_change.x)<0.1 ? frag_in.hue_change.y+(hsv.x-frag_in.hue_change.x) : hsv.x;
 	return hsv2rgb(hsv);
 }
-vec4 read_albedo(vec2 uv) {
-	vec4 c = texture(albedo_tex, uv);
+vec4 process_albedo(vec4 c) {
 	c.rgb = hue_shift(pow(c.rgb, vec3(2.2))) * c.a;
 	return c;
 }
@@ -65,7 +64,9 @@ vec4 read_albedo(vec2 uv) {
 void main() {
 	vec2 uv = mod(frag_in.uv, 1.0) * (frag_in.uv_clip.zw-frag_in.uv_clip.xy) + frag_in.uv_clip.xy;
 
-	vec4 albedo = read_albedo(uv);
+	vec4 albedo = process_albedo(texture(albedo_tex, uv));
+	vec3 F0     = process_albedo(texture(specular_tex, uv)).rgb;
+
 	if(albedo.a < alpha_cutoff) {
 		discard;
 	}
@@ -82,24 +83,20 @@ void main() {
 	vec3 material = texture(material_tex, uv).xyz;
 	float emmision  = material.r;
 	float roughness = 0.1;//TODO: mix(0.01, 0.99, material.b*material.b);
-	float metalness = material.g;
+	float ambient_occlusion = material.g;
 
 
 	float decals_fade = clamp(1.0+frag_in.pos.z/2.0, 0.25, 1.0) * frag_in.decals_intensity * albedo.a;
 	vec4 decals = texture(decals_tex, frag_in.decals_uv);
-	albedo.rgb = mix(albedo.rgb, decals.rgb * decals_fade, decals.a * decals_fade);
+	albedo.rgb = mix(albedo.rgb, decals.rgb * decals_fade * 0.5, decals.a * decals_fade);
 	emmision  = mix(emmision,  0.3, max(0.0, decals.a * decals_fade - 0.5));
 	roughness = mix(roughness, 0.2, decals.a * decals_fade);
-	metalness = mix(metalness, 0.5, decals.a * decals_fade);
+	F0 = mix(F0, vec3(decals.rgb * decals_fade * 0.2), decals.a * decals_fade);
 
-
-	vec3 F0 = mix(vec3(0.04), albedo.rgb, metalness);
-	vec3 diff_color = albedo.rgb * (1.0-metalness);
 
 	vec3 V = normalize(frag_in.pos - eye.xyz);
 
-
-	vec3 final_color = calc_light(frag_in.pos, diff_color, F0, N, V, roughness)
+	vec3 final_color = calc_light(frag_in.pos, albedo.rgb, F0, N, V, roughness)
 	                 + albedo.rgb*emmision;
 	out_color = vec4(final_color, 1.0) * albedo.a;
 }

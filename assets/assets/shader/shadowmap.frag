@@ -29,7 +29,7 @@ vec2 get_position() {
 
 vec4 raycast(vec2 position, vec2 dir) {
 	vec4 distances = vec4(1,1,1,1)*100.0;
-	for (float dist=0.0; dist<1.0; dist+=1.0/(256.0)) {
+	for (float dist=0.0; dist<1.0; dist+=1.0/(512.0)) {
 		vec2 target = dist*dir*2.0 + position;
 
 		vec3 occluder = texture(occlusions, ndc2uv(target)).rgb;

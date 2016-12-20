@@ -8,11 +8,11 @@ namespace graphic {
 
 	namespace {
 		struct Material_desc {
-			std::string albedo, normal, material, height;
+			std::string albedo, normal, material, specular;
 			bool alpha = false;
 		};
 
-		sf2_structDef(Material_desc, albedo, normal, material, height, alpha)
+		sf2_structDef(Material_desc, albedo, normal, material, specular, alpha)
 
 		Texture_ptr black;
 		Texture_ptr white;
@@ -31,10 +31,10 @@ namespace graphic {
 			return aid.empty() ? def : in.manager().load<Texture>(asset::AID(aid));
 		};
 
-		_albedo    = load_or_default(desc.albedo, black);
+		_albedo    = load_or_default(desc.albedo, white);
 		_normal    = load_or_default(desc.normal, normal);
 		_material  = load_or_default(desc.material, material);
-		_height    = load_or_default(desc.height, white);
+		_specular  = load_or_default(desc.specular, black);
 		_alpha     = desc.alpha;
 	}
 
@@ -42,7 +42,7 @@ namespace graphic {
 		cmd.texture(Texture_unit::color,     *_albedo);
 		cmd.texture(Texture_unit::normal,    *_normal);
 		cmd.texture(Texture_unit::material,  *_material);
-		cmd.texture(Texture_unit::height,    *_height);
+		cmd.texture(Texture_unit::specular,  *_specular);
 		if(_alpha)
 			cmd.order_dependent();
 	}

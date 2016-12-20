@@ -228,11 +228,11 @@ namespace graphic {
 		});
 		log<<std::endl;
 
-		if(!success)
-			throw Shader_compiler_error("Shader linker failed");
-
 		for(auto& s : _attached_shaders)
 			glDetachShader(_handle, s->_handle);
+
+		if(!success)
+			throw Shader_compiler_error("Shader linker failed");
 
 		// clear uniform caches
 		_uniform_locations_int.clear();

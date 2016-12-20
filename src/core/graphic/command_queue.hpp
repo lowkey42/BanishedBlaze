@@ -31,8 +31,8 @@ namespace graphic {
 
 		color     = 1,
 		normal    = 2,
-		material  = 3, //< R:emmision, G:metallc, B:roughness
-		height    = 4,
+		material  = 3, //< R:emmision, G:ambient occlusion, B:roughness
+		specular  = 4,
 
 		shadowmap_0=7,
 		shadowmap_1=8,

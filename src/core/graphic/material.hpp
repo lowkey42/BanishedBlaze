@@ -35,9 +35,9 @@ namespace graphic {
 
 		private:
 			Texture_ptr _albedo;
+			Texture_ptr _specular;
+			Texture_ptr _material; //< R:emmision, G:ao, B:roughness
 			Texture_ptr _normal;
-			Texture_ptr _material; //< R:emmision, G:metallc, B:roughness
-			Texture_ptr _height;
 			bool        _alpha = false;
 	};
 	using Material_ptr = asset::Ptr<Material>;

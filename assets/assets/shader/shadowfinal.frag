@@ -4,6 +4,8 @@ precision mediump float;
 in Vertex_out {
 	vec2 world_lightspace;
 	vec2 center_lightspace;
+	vec2 pos_worldspace;
+	vec2 light_src_size;
 } frag_in;
 
 out vec4 out_color;
@@ -12,13 +14,16 @@ uniform sampler2D distance_map_tex;
 uniform sampler2D occlusions;
 uniform int current_light_index;
 
+#include <_uniforms_globals.glsl>
 #include <_uniforms_lighting.glsl>
 
 
-vec3 sample_shadow_ray(vec2 tc, float r) {
+vec3 sample_shadow_ray(vec2 tc, float r, float src_radius) {
 	const float dist_per_arc = 0.02454; // tan(360^/numRays)*2.0
 
 	float light_radius = light[current_light_index].src_radius;
+
+	float world_dist = length(frag_in.pos_worldspace - light[current_light_index].flat_pos.xy);
 
 
 	vec4 s = texture(distance_map_tex, tc);
@@ -28,8 +33,12 @@ vec3 sample_shadow_ray(vec2 tc, float r) {
 		occluder_dist = r/2.0;
 	}
 
-	float p = min(100.0*light_radius/2.0*r, max(0.0, light_radius*(r-occluder_dist)/r) / (dist_per_arc/r));
-	
+	float p = min(100.0*src_radius/2.0*r, max(0.0, src_radius*(r-occluder_dist)/r) / (dist_per_arc/r));
+
+	// TODO: works better with *60.0, but why?
+	p = max(0.0, src_radius*(r-occluder_dist)/r) / (dist_per_arc/world_dist*60.0);
+
+
 	vec3 color= vec3(0,0,0);
 	for(float x=-8.0; x<=8.0; x+=1.0) {
 		vec2 coord = vec2(tc.x + x/8.0 / 512.0 * p, tc.y);
@@ -56,8 +65,9 @@ void main() {
 
 	vec2 tc = vec2(theta /(2.0*PI), (float(current_light_index)+0.5)/4.0);
 
+	float src_radius = frag_in.light_src_size.x;//abs(dot(frag_in.light_src_size.x, dir));
 
-	vec4 c = vec4(sample_shadow_ray(tc, dist), 1.0);
+	vec4 c = vec4(sample_shadow_ray(tc, dist, src_radius), 1.0);
 
 	vec4 occluder = texture(occlusions, frag_in.world_lightspace);
 	c.rgb = min(c.rgb, step(occluder.rgb, vec3(0.2)));

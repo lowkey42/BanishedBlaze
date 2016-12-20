@@ -53,7 +53,7 @@ namespace renderer {
 			auto shadowmap_size_factor = 0.25f; // TODO: get from settings
 			auto framebuffer = Framebuffer(int(graphics_ctx.settings().width  * shadowmap_size_factor),
 			                               int(graphics_ctx.settings().height * shadowmap_size_factor));
-			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGBA, true);
+			framebuffer.add_color_attachment("color"_strid, 0, Texture_format::RGBA_16F, true);
 			framebuffer.build();
 
 			return framebuffer;
@@ -159,7 +159,7 @@ namespace renderer {
 		        .uniform_buffer("lighting", int(Uniform_buffer_slot::lighting))
 		        .uniforms(make_uniform_map(
 		            "shadowmap_tex", int(Texture_unit::temporary),
-		            "depth_tex", int(Texture_unit::height)
+		            "depth_tex", int(Texture_unit::color)
 		        ));
 
 		auto& shadowmap_tex = _shadow_map_tmp.get_attachment("color"_strid);
@@ -223,7 +223,7 @@ namespace renderer {
 		cmd.require_not(Gl_option::depth_test);
 		cmd.require_not(Gl_option::depth_write);
 		cmd.shader(_light_volumn_shader);
-		cmd.texture(Texture_unit::height, last_depth);
+		cmd.texture(Texture_unit::color, last_depth);
 		cmd.object(_light_volumn_obj);
 
 		for(auto i=0u; i<_relevant_lights.size(); i++) {
@@ -342,6 +342,7 @@ namespace renderer {
 
 		_blur_shader.bind();
 		for(auto& shadow_map : _shadow_maps) {
+			for(auto i=0; i<2; i++) {
 			_shadow_map_tmp.bind_target();
 			_blur_shader.set_uniform("horizontal", false);
 			draw_fullscreen_quad(shadow_map.get_attachment("color"_strid), Texture_unit::temporary);
@@ -349,6 +350,7 @@ namespace renderer {
 			shadow_map.bind_target();
 			_blur_shader.set_uniform("horizontal", true);
 			draw_fullscreen_quad(_shadow_map_tmp.get_attachment("color"_strid), Texture_unit::temporary);
+			}
 		}
 	}
 
