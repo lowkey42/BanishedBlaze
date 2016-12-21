@@ -58,7 +58,7 @@ void main() {
 	
 	float theta_local = theta + light[int(uv_frag.y*4.0)].direction;
 	theta_local = ((theta_local/(2.0*PI)) - floor(theta_local/(2.0*PI))) * 2.0*PI - PI;
-	if(abs(theta_local) > light[int(uv_frag.y*3.0)].angle){out_color=vec4(0,0,0,0); return;}
+	if(abs(theta_local) > light[int(uv_frag.y*4.0)].angle){out_color=vec4(0,0,0,0); return;}
 	
 	vec2 dir = vec2(cos(theta), sin(theta));
 
