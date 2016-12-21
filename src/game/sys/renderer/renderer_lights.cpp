@@ -286,10 +286,6 @@ namespace renderer {
 			l.flat_pos = p.xy() / p.w;
 		}
 
-		auto process_angle = [&](auto a) {
-			return (a.value() + glm::smoothstep(1.8f*glm::pi<float>(), 2.0f*PI, a.value())*1.0f) / 2.0f;
-		};
-
 		auto i=0;
 		for(auto& light : _relevant_lights) {
 			auto& light_uniforms = uniforms.light[i++];
@@ -301,7 +297,7 @@ namespace renderer {
 			                           + light.light->_direction.value();
 			
 			light_uniforms.color = glm::vec4(light.light->color(),1.f);
-			light_uniforms.angle = process_angle(light.light->_angle);
+			light_uniforms.angle = light.light->_angle;
 			light_uniforms.area_of_effect = light.light->area_of_effect() / 1_m * light.transform->scale();
 			light_uniforms.src_radius = light.light->src_radius() / 1_m * light.transform->scale();
 		}

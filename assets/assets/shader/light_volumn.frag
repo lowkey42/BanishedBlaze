@@ -20,7 +20,7 @@ uniform mediump int current_light_index;
 
 
 float rand(vec2 c){
-    return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+	return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 float noise(vec2 p, float freq ){
@@ -29,7 +29,6 @@ float noise(vec2 p, float freq ){
 	float unit = 4.0/freq;
 	vec2 ij = floor(p/unit);
 	vec2 xy = mod(p,unit)/unit;
-	//xy = 3.*xy*xy-2.*xy*xy*xy;
 	xy = .5*(1.-cos(PI*xy));
 	float a = rand((ij+vec2(0.,0.)));
 	float b = rand((ij+vec2(1.,0.)));
@@ -96,17 +95,28 @@ void main() {
 		discard;
 	}
 
+	vec3 light_dir = vec3(cos(-light[current_light_index].direction),
+	                      sin(-light[current_light_index].direction),
+	                      0.0);
+	float angle_cos = cos(light[current_light_index].angle);
+	
 	float L = 0.0;
 	for(float i=1.0; i>=0.0; i-=0.1) {
 		float r = s*(i*2.0-1.0);
 		
-		float d = length(light[current_light_index].pos.xyz - (frag_in.world_pos + vec3(0,0,r)));
+		vec3 diff = light[current_light_index].pos.xyz - (frag_in.world_pos + vec3(0,0,r));
+		float d = length(diff);
 
 		float v = visibility(env_world_pos, r);
 		
 		float denom = d/light[current_light_index].src_radius + 1.0;
 		float attenuation = clamp(1.0 / (denom*denom) -0.0001, 0.0, 1.0) / (1.0-0.0001);
-		attenuation = pow(attenuation,0.75);
+		attenuation = pow(attenuation,0.5);
+		
+		if(light[current_light_index].angle<1.999*PI) {
+			float spot_factor = dot(diff/d, light_dir);
+			attenuation *= 1.0 - (1.0 - spot_factor) / (1.0 - angle_cos);
+		}
 		
 		float dRcp = 1.0/d;
 		float L_i = tau * v * phi*albedo*PI_rcp* dRcp*dRcp * exp(-d*tau)*exp(-1*tau) * dl * attenuation;
